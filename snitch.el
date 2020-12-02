@@ -520,7 +520,9 @@ the globally configured log filters."
                                           'event
                                           event)
     (snitch--log 'all event)
-    (let* ((wl (symbol-value (intern-soft
+    (let* ((policy (symbol-value (intern-soft
+                                  (format "snitch-%s-policy" prefix))))
+           (wl (symbol-value (intern-soft
                               (format "snitch-%s-whitelist" prefix))))
            (bl (symbol-value (intern-soft
                               (format "snitch-%s-blacklist" prefix))))
@@ -528,7 +530,7 @@ the globally configured log filters."
            (bled (intern-soft (format "%s-blacklisted" prefix)))
            (alw (intern-soft (format "%s-allowed" prefix)))
            (blk (intern-soft (format "%s-blocked" prefix)))
-           (decision (cond ((eq snitch-process-policy 'deny)
+           (decision (cond ((eq policy 'deny)
                             (snitch--decide event
                                             wl
                                             'whitelist
@@ -542,7 +544,7 @@ the globally configured log filters."
                                             snitch-on-blacklist-functions
                                             'allow
                                             snitch-on-allow-functions)))))
-      (cond ((eq snitch-process-policy 'deny)
+      (cond ((eq policy 'deny)
              (progn
                (snitch--log (if decision wled blk) event)
                (when decision (apply orig-fun args))))
