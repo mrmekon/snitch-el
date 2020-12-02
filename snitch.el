@@ -271,6 +271,19 @@
 ;; not, however, save you from the bad guys.
 ;;
 ;;
+;; === KNOWN LIMITATIONS ===
+;;
+;; snitch does not intercept domain name resolution (DNS).
+;;
+;; snitch has a strong preference for identifying user-provided
+;; packages as the "originating source" of events.  Events that you
+;; may consider as originated in built-in/site-lisp code may be
+;; attributed to a user package instead, if one is higher up in the
+;; backtrace.  For instance, `helm' may often show up as the source if
+;; installed, since `helm-M-x-execute-command' is often somewhere in
+;; the stack.
+;;
+;;
 ;; === TODO ===
 ;;
 ;;  - send notifications in batches?
