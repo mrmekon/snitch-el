@@ -124,18 +124,32 @@
             (add-to-list 'stack (list clean-fun path package))))))
   (reverse stack))
 
-;; return true of package type 'a' is "more important", i.e. more likely
-;; to be the package responsible for a request.  Used to traverse a
-;; backtrace looking for the "most important" function -- the most recent
-;; function that should be considered the triggering cause.
 (defun snitch--package-type-more-important (a b)
+  "Return t if package type of 'a' is more important than the
+package type of b, where:
+
+- nil > nil
+- built-in > nil, built-in
+- site-lisp > nil, built-in, site-lisp
+- user > nil, built-in, site-lisp
+- package > nil, built-in, site-lisp, user
+
+Noting that the first three are more important than themselves.
+This is due to long chains of nil/built-in/site-lisp packages in
+every backtrace, where typically the earliest one is the one that
+started the chain.
+
+On the other hand, for packages, we really want to focus on the
+very last function that was responsible for triggering the rest
+of the emacs internal activity.
+"
   (cond
    ;; nil only greater than nil
    ((null a) (member b (list nil)))
-   ;; site-lisp more important than nil and itself
-   ((eq 'site-lisp a) (member b (list nil 'site-lisp)))
-   ;; built-in more important than nil, site-lisp, and itself
-   ((eq 'built-in a) (member b (list nil 'site-lisp 'built-in)))
+   ;; built-in more important than nil, and itself
+   ((eq 'built-in a) (member b (list nil 'built-in)))
+   ;; site-lisp more important than nil, built-in, and itself
+   ((eq 'site-lisp a) (member b (list nil 'built-in 'site-lisp)))
    ;; user more important than earlier, but not more important
    ;; than itself.
    ((eq 'user a) (member b (list nil 'site-lisp 'built-in)))
@@ -147,10 +161,15 @@
 
 (defun snitch--responsible-caller (backtrace)
   (cl-loop for caller in backtrace with result = nil
-           when (snitch--package-type-more-important
-                 (nth 2 caller)
-                 (if (null result) nil
-                   (nth 2 (car result))))
+           when (and (snitch--package-type-more-important
+                      (nth 2 caller)
+                      (if (null result) nil
+                        (nth 2 (car result))))
+                     ;; as a special case, ignore functions in
+                     ;; startup.el since it doesn't really make sense
+                     ;; for them to be the resposible caller
+                     (not (and (eq (nth 2 caller) 'site-lisp)
+                               (string-suffix-p "/startup.el" (nth 1 caller)))))
            do
            (push caller result)
            finally return (car result)))
