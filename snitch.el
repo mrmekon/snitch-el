@@ -614,14 +614,20 @@ network connections."
 (defun snitch-init ()
   "Initialize snitch.el firewall, enabling globally."
   (interactive)
-  (snitch--register-wrapper-fns))
+  (when (snitch--register-wrapper-fns) t))
 
 (defun snitch-deinit ()
   "Unload snitch.el firewall, disabling globally."
   (interactive)
   (snitch--stop-log-prune-timer)
-  (unload-feature 'snitch)
-  (require 'snitch))
+  (unload-feature 'snitch t)
+  (when (require 'snitch) t))
+
+(defun snitch-restart ()
+  "Unload snitch.el and re-launch snitch firewall."
+  (interactive)
+  (when (snitch-deinit)
+    (snitch-init)))
 
 (provide 'snitch)
 
