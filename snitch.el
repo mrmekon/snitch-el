@@ -374,6 +374,9 @@ in the ‘src-pkg’ field of each event object.  In addition to
 these pre-defined types, any loaded package name (as a symbol) is
 a permitted type as well.
 
+  nil -- unknown source, including lambdas, closures, and
+compiled functions.
+
   'built-in' -- package provided by emacs, and responds true to
 the ‘package-built-in-p’ function.
 
