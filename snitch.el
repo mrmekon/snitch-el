@@ -306,6 +306,7 @@
 
 (require 'eieio) ; class objects
 (require 'cl-macs) ; cl loops
+(require 'package) ; backtrace package sources
 
 (require 'snitch-backtrace)
 (require 'snitch-custom)
