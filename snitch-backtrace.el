@@ -94,15 +94,34 @@
   (setq stack '())
   (let ((frames (backtrace-get-frames)))
     (dotimes (idx (length frames))
-      (if (> idx 5) ; skip frames in snitch
+      (if (> idx 3) ; skip frames in snitch
           (let* ((frame (nth idx frames))
                  (fun (backtrace-frame-fun frame))
+                 ;; if function is a lambda, just send back the
+                 ;; 'lambda symbol instead of the entire function
+                 ;; definition.  likewise for closures, which are what
+                 ;; lambdas become when lexical-binding is t.
+                 ;;
+                 ;; compiled functions are returned as
+                 ;; 'compiled-function, as they do not contain their
+                 ;; own names.
+                 (clean-fun (cond
+                             ((and (listp fun)
+                                   (eq (car fun) 'lambda))
+                              'lambda)
+                             ((and (listp fun)
+                                   (eq (car fun) 'closure))
+                              'lambda)
+                             ((macrop fun) 'macro)
+                             ((byte-code-function-p fun)
+                              'compiled-function)
+                             (t fun)))
                  (path (find-lisp-object-file-name fun 'defun))
                  (file (if path (file-name-base path) nil))
                  (dir (if path (file-name-directory path) nil))
                  (package (if path (snitch--package-from-path path) nil)))
             ;;(message "frame %d: %s (%s) [%s]" idx fun path package)
-            (add-to-list 'stack (list fun path package))))))
+            (add-to-list 'stack (list clean-fun path package))))))
   (reverse stack))
 
 ;; return true of package type 'a' is "more important", i.e. more likely
