@@ -138,9 +138,7 @@ snitch-network-whitelist."
 
 ;;;###autoload
 (defcustom snitch-network-whitelist
-  '(
-    (snitch-filter/src-pkg . (user))
-    )
+  '()
   ""
   :group 'snitch-rules
   :type '(alist :key-type function
@@ -150,7 +148,7 @@ snitch-network-whitelist."
 (defcustom snitch-process-blacklist
   '(
     ;; Example: block processes from elfeed
-    (snitch-filter/src-pkg . (elfeed))
+    ;;(snitch-filter/src-pkg . (elfeed))
 
     ;; Example: block processes from system packages
     ;;(snitch-filter/src-pkg . (site-lisp))
@@ -159,7 +157,7 @@ snitch-network-whitelist."
     ;;(snitch-filter/src-pkg . (built-in))
 
     ;; Example: block processes from an unknown user package
-    (snitch-filter/src-pkg . (user))
+    ;;(snitch-filter/src-pkg . (user))
     )
   ""
   :group 'snitch-rules
