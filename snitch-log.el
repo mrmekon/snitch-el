@@ -446,7 +446,7 @@ filter from an existing log line."
       (setq-local show-trailing-whitespace nil))))
 
 (defun snitch--hide-log-filter-window (buffer)
-  "Hide which-key buffer when side-window popup is used."
+  "Hide snitch log filter window."
   ;; based on which-key
   (when (buffer-live-p buffer)
     (quit-windows-on buffer)
