@@ -21,6 +21,7 @@ Notifications can be raised on each logged event by ensuring the
 ’alert’ package is installed and customizing
 ‘snitch-enable-notifications’ to t.
 
+
 === MECHANISM ===
 
 The underlying ’firewall’ mechanism is built on function advice
@@ -59,6 +60,28 @@ the event information programatically from a log line with
 ‘get-text-property’.  The text lines can be "pretty printed" by
 customizing ‘snitch-log-verbose’.
 
+An example log entry is below, split to several lines for display.
+In the actual log, non-verbose logs are a single line.
+
+  [2020-12-03 00:16:50] (whitelisted) -- #s(snitch-network-entry \
+       1606951010.2966838 helm-M-x-execute-command \
+       /home/trevor/.emacs.d/elpa/helm-20201019.715/helm-command.el \
+       helm 127.0.0.1 127.0.0.1 64222 nil)
+
+With `snitch-log-verbose' enabled, log entries actually do take
+several lines:
+
+  [2020-12-03 01:11:27] (blocked) --
+  (snitch-network-entry "snitch-network-entry-157d34506664"
+
+    :timestamp 1606954287.770638
+    :src-fn snitch--wrap-make-network-process
+    :src-path "/home/trevor/.emacs.d/snitch/snitch.el"
+    :src-pkg user
+    :proc-name "google.com"
+    :host "google.com"
+    :port 80)
+
 
 === USAGE ===
 
@@ -69,10 +92,10 @@ on startup time.
 
 An example initialization using ‘use-package’ might look like so:
 
-(use-package snitch
-:ensure t
-:init
-(snitch-init))
+  (use-package snitch
+    :ensure t
+    :init
+    (snitch-init))
 
 snitch then runs in the background, performing its duties according
 to your configuration, and logging in its dedicated buffer.
@@ -97,21 +120,21 @@ manually in your emacs initialization file.
 Most users will have five variables that need to be configured
 before use:
 
-- ‘snitch-network-policy’ -- whether to allow or deny network
+ - ‘snitch-network-policy’ -- whether to allow or deny network
 connections by default.
 
-- ‘snitch-process-policy’ -- whether to allow or deny subprocesses
+ - ‘snitch-process-policy’ -- whether to allow or deny subprocesses
 by default.
 
-- ‘snitch-log-policy’ -- which events to log (to see the options,
+ - ‘snitch-log-policy’ -- which events to log (to see the options,
 run ‘M-x describe-variable <RET> snitch-log-policies’)
 
-- ‘snitch-network-*list’ -- filter rules containing exceptions to
+ - ‘snitch-network-*list’ -- filter rules containing exceptions to
 the default network policy.  See FILTER RULES below.  Use
 ‘-whitelist’ if the default policy is ‘deny’, or ‘-blacklist’ if
 the default policy is ‘allow’
 
-- ‘snitch-process-*list’ -- filter rules containing exceptions to
+ - ‘snitch-process-*list’ -- filter rules containing exceptions to
 the default process policy.  See FILTER RULES below.  Use
 ‘-whitelist’ if the default policy is ‘deny’, or ‘-blacklist’ if
 the default policy is ‘allow’
@@ -124,15 +147,15 @@ default, but allow certain packages to communicate.  This example
 demonstrates permitting only the ’elfeed’ package to create network
 connections:
 
-(use-package snitch
-:ensure t
-:init
-(setq snitch-network-policy 'deny)
-(setq snitch-process-policy 'deny)
-(setq snitch-log-policy '(blocked whitelisted allowed))
-(add-to-list 'snitch-network-whitelist
-(cons #'snitch-filter/src-pkg '(elfeed)))
-(snitch-init))
+  (use-package snitch
+    :ensure t
+    :init
+    (setq snitch-network-policy 'deny)
+    (setq snitch-process-policy 'deny)
+    (setq snitch-log-policy '(blocked whitelisted allowed))
+    (add-to-list 'snitch-network-whitelist
+                  (cons #'snitch-filter/src-pkg '(elfeed)))
+    (snitch-init))
 
 
 ==== COMMON CONFIG: ALLOW + AUDIT ====
@@ -140,14 +163,14 @@ connections:
 Another useful configuration is to allow all accesses, but log them
 to keep an audit trail.  This might look like so:
 
-(use-package snitch
-:ensure t
-:init
-(setq snitch-network-policy 'allow)
-(setq snitch-process-policy 'allow)
-(setq snitch-log-policy '(allowed blocked whitelisted blacklisted))
-(setq snitch-log-verbose t)
-(snitch-init))
+  (use-package snitch
+    :ensure t
+    :init
+    (setq snitch-network-policy 'allow)
+    (setq snitch-process-policy 'allow)
+    (setq snitch-log-policy '(allowed blocked whitelisted blacklisted))
+    (setq snitch-log-verbose t)
+    (snitch-init))
 
 
 ==== FILTER RULES ====
@@ -158,38 +181,38 @@ function, and the cdr is a list of arguments to pass to the
 function in addition to the event object:
 
 (setq snitch-network-whitelist
-'(
-(filter-fn1 . (argQ argL))
-(filter-fn2 . (argN argP))
-))
+  '(
+     (filter-fn1 . (argQ argL))
+     (filter-fn2 . (argN argP))
+   ))
 
 Each filter function should have a prototype accepting EVENT as the
 snitch event object in consideration, and ARGS as the list of
 arguments from the cdr of the rules entry:
 
-(defun filter-fn1 (event &rest args))
+  (defun filter-fn1 (event &rest args))
 
 A trivial function which matches if a single string in the event
 object matches a known value might look like so:
 
-(defun filter-fn1 (event name)
-(string-equal (oref event proc-name) name))
+  (defun filter-fn1 (event name)
+    (string-equal (oref event proc-name) name))
 
 While a more complex filter function might treat ARGS as an
 associative list of key/value pairs:
 
-(defun filter-fn2 (event &rest alist)
-(cl-loop for (aslot . avalue) in alist with accept = t
-do
-(let ((evalue (eieio-oref event aslot))
-(val-type (type-of avalue)))
-(unless (cond
-((eq val-type 'string) (string-equal avalue evalue))
-(t (eq avalue evalue)))
-(setq accept nil)))
-when (null accept)
-return nil
-finally return accept))
+  (defun filter-fn2 (event &rest alist)
+    (cl-loop for (aslot . avalue) in alist with accept = t
+             do
+             (let ((evalue (eieio-oref event aslot))
+                   (val-type (type-of avalue)))
+               (unless (cond
+                        ((eq val-type 'string) (string-equal avalue evalue))
+                        (t (eq avalue evalue)))
+                 (setq accept nil)))
+             when (null accept)
+             return nil
+             finally return accept))
 
 The return value of a filter function determines whether the filter
 should take effect.  t means "take effect" and nil means "do not
@@ -208,7 +231,7 @@ snitch’s final decision.
 
 Hook functions take a single argument, the event object:
 
-(defun snitch-hook (event))
+  (defun snitch-hook (event))
 
 Hooks should return t to allow snitch to continue processing as it
 would have, or return nil to reverse snitch’s decision.  For hooks
@@ -267,17 +290,24 @@ backtrace.  For instance, `helm' may often show up as the source if
 installed, since `helm-M-x-execute-command' is often somewhere in
 the stack.
 
+snitch has not been tested with IPv6.
+
+snitch has not been tested with inbound connections.  In theory, it
+can prevent the creation of a listening socket.  Once a socket is
+open, though, it would not be able to monitor incoming connections
+to the socket.
+
 
 === TODO ===
 
-- send notifications in batches?
-- interactive prompts?
-- handle service strings as port numbers
-- ensure the inverted negation rules make sense
-- automated test suite
-- publish on gitwhatever
-- publish on MELPA?
-- profit!
+ - send notifications in batches?
+ - interactive prompts?
+ - handle service strings as port numbers
+ - ensure the inverted negation rules make sense
+ - automated test suite
+ - publish on gitwhatever
+ - publish on MELPA?
+ - profit!
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

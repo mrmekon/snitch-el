@@ -37,6 +37,7 @@
 ;; ’alert’ package is installed and customizing
 ;; ‘snitch-enable-notifications’ to t.
 ;;
+;;
 ;; === MECHANISM ===
 ;;
 ;; The underlying ’firewall’ mechanism is built on function advice
@@ -74,6 +75,28 @@
 ;; the event information programatically from a log line with
 ;; ‘get-text-property’.  The text lines can be "pretty printed" by
 ;; customizing ‘snitch-log-verbose’.
+;;
+;; An example log entry is below, split to several lines for display.
+;; In the actual log, non-verbose logs are a single line.
+;;
+;;   [2020-12-03 00:16:50] (whitelisted) -- #s(snitch-network-entry \
+;;        1606951010.2966838 helm-M-x-execute-command \
+;;        /home/trevor/.emacs.d/elpa/helm-20201019.715/helm-command.el \
+;;        helm 127.0.0.1 127.0.0.1 64222 nil)
+;;
+;; With `snitch-log-verbose' enabled, log entries actually do take
+;; several lines:
+;;
+;;   [2020-12-03 01:11:27] (blocked) --
+;;   (snitch-network-entry "snitch-network-entry-157d34506664"
+;;
+;;     :timestamp 1606954287.770638
+;;     :src-fn snitch--wrap-make-network-process
+;;     :src-path "/home/trevor/.emacs.d/snitch/snitch.el"
+;;     :src-pkg user
+;;     :proc-name "google.com"
+;;     :host "google.com"
+;;     :port 80)
 ;;
 ;;
 ;; === USAGE ===
@@ -282,6 +305,13 @@
 ;; backtrace.  For instance, `helm' may often show up as the source if
 ;; installed, since `helm-M-x-execute-command' is often somewhere in
 ;; the stack.
+;;
+;; snitch has not been tested with IPv6.
+;;
+;; snitch has not been tested with inbound connections.  In theory, it
+;; can prevent the creation of a listening socket.  Once a socket is
+;; open, though, it would not be able to monitor incoming connections
+;; to the socket.
 ;;
 ;;
 ;; === TODO ===
