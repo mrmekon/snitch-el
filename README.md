@@ -22,6 +22,26 @@ Notifications can be raised on each logged event by ensuring the
 ‘snitch-enable-notifications’ to t.
 
 
+=== WHY? ===
+
+Emacs is a general-purpose execution environment, executing with
+the full privileges of whichever user launched it.  It can read and
+create files, obviously, but also spawn external programs, open
+network connections, and communicate through pipes.  In modern
+times, most users manage large collections of third-party packages
+through intelligent package managers that automatically pull in any
+number of dependencies, updated periodically.  Any and all of these
+could be a bit naughty, and the sheer quantity of lisp code in a
+modern emacs install makes it un-auditable.
+
+An emacs firewall, thus, makes sense.  Does *snitch* make sense?
+Not really... see the SECURITY section below.  But we currently
+have nothing, and snitch is better than nothing.
+
+Also, to answer the question: "I wonder if I can make an emacs
+firewall?"
+
+
 === MECHANISM ===
 
 The underlying ’firewall’ mechanism is built on function advice
@@ -140,6 +160,11 @@ the default process policy.  See FILTER RULES below.  Use
 the default policy is ‘allow’
 
 
+Have a look in ‘snitch-filter.el’ for examples of black/whitelist
+filters, and in ‘snitch-test.el’ for contrived examples of pretty
+much everything.
+
+
 ==== COMMON CONFIG: DENY ====
 
 A useful configuration is to deny all external communication by
@@ -182,7 +207,7 @@ function in addition to the event object:
 
 (setq snitch-network-whitelist
   '(
-     (filter-fn1 . (argQ argL))
+     (filter-fn1 . (argQ))
      (filter-fn2 . (argN argP))
    ))
 
@@ -253,6 +278,24 @@ event to be blocked, returning nil in a ‘snitch-on-block-functions’
 hook causes it to be allowed.
 
 
+=== PERFORMANCE ===
+
+Performance has not been measured, and should not be assumed to be
+particularly good.  Nothing is currently optimized.
+
+Memory usage should not be particularly high, as events are
+ephemeral and only contain a small amount of metadata.  The largest
+use of memory is the audit log, which does keep copies of all
+events in the log.  This can be controlled via
+‘snitch--log-buffer-max-lines’.
+
+Firewall rules are traversed linearly, and short-circuit (if an
+early rule terminates processing, the subsequent rules will not be
+considered).  To optimize for performance, the total number of
+rules should be kept to a minimum, and most likely to match rules
+should be added earlier in the lists.
+
+
 === SECURITY ===
 
 snitch provides, effectively, zero security.
@@ -289,6 +332,12 @@ not, however, save you from the bad guys.
 
 
 === KNOWN LIMITATIONS ===
+
+When snitch blocks events, some emacs functions that seldom throw
+errors in normal use will throw errors because of snitch.  It is
+very likely that blocked connections will cause errors to bubble up
+in strange and unexpected ways, as many package authors have not
+handled these exceptional cases.
 
 snitch does not intercept domain name resolution (DNS).
 
