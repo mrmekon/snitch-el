@@ -38,6 +38,26 @@
 ;; ‘snitch-enable-notifications’ to t.
 ;;
 ;;
+;; === WHY? ===
+;;
+;; Emacs is a general-purpose execution environment, executing with
+;; the full privileges of whichever user launched it.  It can read and
+;; create files, obviously, but also spawn external programs, open
+;; network connections, and communicate through pipes.  In modern
+;; times, most users manage large collections of third-party packages
+;; through intelligent package managers that automatically pull in any
+;; number of dependencies, updated periodically.  Any and all of these
+;; could be a bit naughty, and the sheer quantity of lisp code in a
+;; modern emacs install makes it un-auditable.
+;;
+;; An emacs firewall, thus, makes sense.  Does *snitch* make sense?
+;; Not really... see the SECURITY section below.  But we currently
+;; have nothing, and snitch is better than nothing.
+;;
+;; Also, to answer the question: "I wonder if I can make an emacs
+;; firewall?"
+;;
+;;
 ;; === MECHANISM ===
 ;;
 ;; The underlying ’firewall’ mechanism is built on function advice
@@ -156,6 +176,11 @@
 ;; the default policy is ‘allow’
 ;;
 ;;
+;; Have a look in ‘snitch-filter.el’ for examples of black/whitelist
+;; filters, and in ‘snitch-test.el’ for contrived examples of pretty
+;; much everything.
+;;
+;;
 ;; ==== COMMON CONFIG: DENY ====
 ;;
 ;; A useful configuration is to deny all external communication by
@@ -198,7 +223,7 @@
 ;;
 ;; (setq snitch-network-whitelist
 ;;   '(
-;;      (filter-fn1 . (argQ argL))
+;;      (filter-fn1 . (argQ))
 ;;      (filter-fn2 . (argN argP))
 ;;    ))
 ;;
