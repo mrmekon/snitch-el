@@ -137,7 +137,7 @@ log message. "
   "Log a snitch event to the dedicated snitch firewall log
 buffer.  EVENT is an event object, and EVT-TYPE is any policy
 type from ‘snitch-log-policies’."
-  (when (snitch--log-policy-match '(evt-type))
+  (when (snitch--log-policy-match (list evt-type))
     (let* ((name (cond ((eq evt-type 'all) "event")
                        ((eq evt-type 'whitelisted) "whitelisted")
                        ((eq evt-type 'process-whitelisted) "whitelisted")
