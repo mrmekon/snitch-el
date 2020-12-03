@@ -385,7 +385,7 @@ user keypresses."
   (setq network-alist
         '((host . (key "h" name "host"
                        mnemonic-name "[h]ost"))
-          (port . (key "o" name "host"
+          (port . (key "o" name "port"
                        mnemonic-name "p[o]rt"))
           (family . (key "m" name "family"
                        mnemonic-name "fa[m]ily"))))
