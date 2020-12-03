@@ -192,6 +192,9 @@ arguments from the cdr of the rules entry:
 
   (defun filter-fn1 (event &rest args))
 
+EVENT is an eieio object defined by ‘snitch-network-entry’ or
+‘snitch-process-entry’, and inheriting from ‘snitch-source’.
+
 A trivial function which matches if a single string in the event
 object matches a known value might look like so:
 
@@ -229,9 +232,16 @@ These hooks can subscribe to receive events either immediately on
 arrival, upon a final decision, or both.  The hooks can change
 snitch’s final decision.
 
-Hook functions take a single argument, the event object:
+Hook functions take two arguments, the type and the event object:
 
-  (defun snitch-hook (event))
+  (defun snitch-hook (type event))
+
+TYPE is one of `snitch-hook-types', and corresponds with the names
+of the hook lists.  This argument is provided so you can define one
+function which can be used in several hooks.
+
+EVENT is an eieio object defined by ‘snitch-network-entry’ or
+‘snitch-process-entry’, and inheriting from ‘snitch-source’.
 
 Hooks should return t to allow snitch to continue processing as it
 would have, or return nil to reverse snitch’s decision.  For hooks
