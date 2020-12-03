@@ -450,7 +450,7 @@ filter from an existing log line."
   ;; based on which-key
   (when (buffer-live-p buffer)
     (quit-windows-on buffer)
-    (run-hooks snitch-log-filter-window-close-hook)))
+    (run-hooks 'snitch-log-filter-window-close-hook)))
 
 (defun snitch--log-filter-window-size-to-fit (window)
   "Resize log filter window to a reasonable height and maximum
@@ -480,7 +480,7 @@ necessary."
       (display-buffer-reuse-window snitch--log-filter-buffer alist))
      (t
       (display-buffer-in-side-window snitch--log-filter-buffer alist)))
-    (run-hooks snitch-log-filter-window-open-hook)))
+    (run-hooks 'snitch-log-filter-window-open-hook)))
 
 (provide 'snitch-log)
 

@@ -553,11 +553,10 @@ block action should be taken."
   (cl-loop for (f-fn . f-args) in decision-list
            ;; when event is in the white/blacklist, and no
            ;; hooks override the list, return t.
-           when (and (apply f-fn (cons event f-args))
-                     (run-hook-with-args-until-failure list-hook-fns
-                                                        'list-evt-type
-                                                        event))
-           return t
+           when (apply f-fn (cons event f-args))
+           return (run-hook-with-args-until-failure list-hook-fns
+                                                    'list-evt-type
+                                                    event)
            ;; otherwise fall back on default policy
            finally return
            (if (run-hook-with-args-until-failure default-hook-fns
@@ -573,7 +572,7 @@ whitelist.  PREFIX is the string 'process' or 'network' to
 indicate the type of event.  Registered hooks are called before
 making the final decision, and the decision is logged based on
 the globally configured log filters."
-  (when (run-hook-with-args-until-failure snitch-on-event-functions
+  (when (run-hook-with-args-until-failure 'snitch-on-event-functions
                                           'event
                                           event)
     (snitch--log 'all event)
@@ -591,16 +590,16 @@ the globally configured log filters."
                             (snitch--decide event
                                             wl
                                             'whitelist
-                                            snitch-on-whitelist-functions
+                                            'snitch-on-whitelist-functions
                                             'block
-                                            snitch-on-block-functions))
+                                            'snitch-on-block-functions))
                            (t ;; policy allow
                             (snitch--decide event
                                             bl
                                             'blacklist
-                                            snitch-on-blacklist-functions
+                                            'snitch-on-blacklist-functions
                                             'allow
-                                            snitch-on-allow-functions)))))
+                                            'snitch-on-allow-functions)))))
       (cond ((eq policy 'deny)
              (progn
                (snitch--log (if decision wled blk) event)
