@@ -269,6 +269,24 @@
 ;; hook causes it to be allowed.
 ;;
 ;;
+;; === PERFORMANCE ===
+;;
+;; Performance has not been measured, and should not be assumed to be
+;; particularly good.  Nothing is currently optimized.
+;;
+;; Memory usage should not be particularly high, as events are
+;; ephemeral and only contain a small amount of metadata.  The largest
+;; use of memory is the audit log, which does keep copies of all
+;; events in the log.  This can be controlled via
+;; ‘snitch--log-buffer-max-lines’.
+;;
+;; Firewall rules are traversed linearly, and short-circuit (if an
+;; early rule terminates processing, the subsequent rules will not be
+;; considered).  To optimize for performance, the total number of
+;; rules should be kept to a minimum, and most likely to match rules
+;; should be added earlier in the lists.
+;;
+;;
 ;; === SECURITY ===
 ;;
 ;; snitch provides, effectively, zero security.
@@ -305,6 +323,12 @@
 ;;
 ;;
 ;; === KNOWN LIMITATIONS ===
+;;
+;; When snitch blocks events, some emacs functions that seldom throw
+;; errors in normal use will throw errors because of snitch.  It is
+;; very likely that blocked connections will cause errors to bubble up
+;; in strange and unexpected ways, as many package authors have not
+;; handled these exceptional cases.
 ;;
 ;; snitch does not intercept domain name resolution (DNS).
 ;;
