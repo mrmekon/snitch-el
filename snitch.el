@@ -55,7 +55,7 @@
 ;; have nothing, and snitch is better than nothing.
 ;;
 ;; Also, to answer the question: "I wonder if I can make an emacs
-;; firewall?"
+;; firewall?"  Yes! ...well, sort of.
 ;;
 ;;
 ;; === MECHANISM ===
@@ -130,7 +130,7 @@
 ;;
 ;;   (use-package snitch
 ;;     :ensure t
-;;     :init
+;;     :config
 ;;     (snitch-init))
 ;;
 ;; snitch then runs in the background, performing its duties according
@@ -190,7 +190,7 @@
 ;;
 ;;   (use-package snitch
 ;;     :ensure t
-;;     :init
+;;     :config
 ;;     (setq snitch-network-policy 'deny)
 ;;     (setq snitch-process-policy 'deny)
 ;;     (setq snitch-log-policy '(blocked whitelisted allowed))
@@ -206,7 +206,7 @@
 ;;
 ;;   (use-package snitch
 ;;     :ensure t
-;;     :init
+;;     :config
 ;;     (setq snitch-network-policy 'allow)
 ;;     (setq snitch-process-policy 'allow)
 ;;     (setq snitch-log-policy '(allowed blocked whitelisted blacklisted))

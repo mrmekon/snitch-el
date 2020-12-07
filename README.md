@@ -39,7 +39,7 @@ Not really... see the SECURITY section below.  But we currently
 have nothing, and snitch is better than nothing.
 
 Also, to answer the question: "I wonder if I can make an emacs
-firewall?"
+firewall?"  Yes! ...well, sort of.
 
 
 === MECHANISM ===
@@ -114,7 +114,7 @@ An example initialization using ‘use-package’ might look like so:
 
   (use-package snitch
     :ensure t
-    :init
+    :config
     (snitch-init))
 
 snitch then runs in the background, performing its duties according
@@ -174,7 +174,7 @@ connections:
 
   (use-package snitch
     :ensure t
-    :init
+    :config
     (setq snitch-network-policy 'deny)
     (setq snitch-process-policy 'deny)
     (setq snitch-log-policy '(blocked whitelisted allowed))
@@ -190,7 +190,7 @@ to keep an audit trail.  This might look like so:
 
   (use-package snitch
     :ensure t
-    :init
+    :config
     (setq snitch-network-policy 'allow)
     (setq snitch-process-policy 'allow)
     (setq snitch-log-policy '(allowed blocked whitelisted blacklisted))
@@ -296,6 +296,72 @@ rules should be kept to a minimum, and most likely to match rules
 should be added earlier in the lists.
 
 
+=== TIMER TRACING ===
+
+Since snitch’s usefulness is highly dependent on the ability to
+trace back to the original source that triggered an event, emacs
+timers pose a bit of a challenge.  Timers are used to trigger
+network requests asynchronously, but have the side effect of losing
+the stack trace back to the function or package that initiated it.
+
+To deal with this, snitch optionally supports timer tracing.  When
+tracing is enabled, by customizing ‘snitch-trace-timers’ to t,
+snitch hooks into emacs’s timer functions, and records backtraces
+whenever a timer is registered.  If a timer later generates a
+snitch-relevant event, snitch concatenates the regular backtrace
+with the cached timer backtrace to get a full call stack for the
+event.
+
+As an example, here are two snitch log entries when opening RSS
+feeds with the elfeed package, which uses timers for web requests:
+
+With ‘snitch-trace-timers’ set to nil (tracing disabled):
+
+  [2020-12-07 21:32:56] (allowed) -- #s(snitch-network-entry \
+    1607373176.6757963 \
+    timer-event-handler \
+    /usr/share/emacs/27.1/lisp/emacs-lisp/timer.el \
+    site-lisp \
+    www.smbc-comics.com www.smbc-comics.com 443 nil)
+
+Notice how the source is the function ‘timer-event-handler’ in
+‘timer.el’, part of the special ‘site-lisp’ package?  *All*
+timer-originated network calls appear to originate from that
+function, since it is the lowest level emacs timer dispatch
+function.  It is impossible to filter on the true source.
+
+Now with ‘snitch-trace-timers’ set to t (tracing enabled):
+
+  [2020-12-07 21:33:06] (allowed) -- #s(snitch-network-entry \
+    1607373186.6863618 \
+    elfeed-insert-html
+    /home/trevor/.emacs.d/elpa/elfeed-20200910.239/elfeed-show.el \
+    elfeed \
+    www.smbc-comics.com www.smbc-comics.com 443 nil)
+
+For this event, snitch has successfully traced through the timer to
+find the true source, ‘elfeed-insert-html’ in the ‘elfeed’ package!
+
+Timer tracing comes with a cost: snitch has to generate metadata
+for every single timer event.  If your emacs usage involves a very
+large number of timers, or very high-frequency timers, snitch’s
+tracing could lead to delays and inflated memory usage.  Consider
+carefully whether this is a feature you need, and leave it disabled
+if you will not use it, or if you experience any performance issues
+while running snitch.
+
+You can run ‘snitch-monitor-unique-timer-fns’ to get a sense of
+which timers are currently active.  After running that function,
+there will be a 60 second delay, followed by printing the names of
+all timers that were active during the minute and the number of
+times they fired.
+
+Similarly, if you run with timer tracing enabled for a while, you
+can use ‘snitch--debug-print-timer-state’ to print a summary of how
+many timers snitch has intercepted, and how many saved backtraces
+are currently active in memory.
+
+
 === SECURITY ===
 
 snitch provides, effectively, zero security.
@@ -363,8 +429,7 @@ to the socket.
  - interactive prompts?
  - handle service strings as port numbers
  - ensure the inverted negation rules make sense
- - automated test suite
- - publish on gitwhatever
+ - add blacklist for timer functions
  - publish on MELPA?
  - profit!
 
