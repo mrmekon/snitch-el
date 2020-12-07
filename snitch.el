@@ -4,7 +4,7 @@
 ;; Copyright (C) 2020 Trevor Bentley
 ;; Author: Trevor Bentley <snitch.el@x.mrmekon.com>
 ;; Created: 01 Dec 2020
-;; Version: 0.1
+;; Version: 0.1.0
 ;;
 ;; Keywords: processes, comm
 ;; URL: https://github.com/mrmekon/snitch-el
