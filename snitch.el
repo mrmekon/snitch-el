@@ -671,7 +671,7 @@ block action should be taken."
            ;; hooks override the list, return t.
            when (apply f-fn (cons event f-args))
            return (run-hook-with-args-until-failure list-hook-fns
-                                                    'list-evt-type
+                                                    list-evt-type
                                                     event)
            ;; otherwise fall back on default policy
            finally return

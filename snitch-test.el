@@ -625,8 +625,11 @@ the event matches a whitelist filter."
 returning nil from a hook immediately blocks the event."
   (setq hook1-var 0)
   (setq hook2-var 0)
+  (setq types '())
   (let ((orig-vars (snitch-test--save-vars t))
-        (hook1 (lambda (type event) (setq hook1-var (+ hook1-var 1)) t))
+        (hook1 (lambda (type event)
+                 (add-to-list 'types type)
+                 (setq hook1-var (+ hook1-var 1)) t))
         (hook2 (lambda (type event) (setq hook2-var (+ hook2-var 1)) t))
         (hook3 (lambda (type event) nil)))
     (snitch-test--clear-vars 'allow 'allow t)
@@ -659,6 +662,9 @@ returning nil from a hook immediately blocks the event."
     (should (equal hook1-var 4))
     (should (equal hook2-var 4))
 
+    (should (eq 1 (length types)))
+    (should (memq 'event types))
+
     ;; cleanup
     (snitch-test--restore-vars orig-vars)
     (snitch-test--cleanup)))
@@ -668,8 +674,11 @@ returning nil from a hook immediately blocks the event."
 event, and that returning nil from the hooks blocks the event."
   (setq hook1-var 0)
   (setq hook2-var 0)
+  (setq types '())
   (let ((orig-vars (snitch-test--save-vars t))
-        (hook1 (lambda (type event) (setq hook1-var (+ hook1-var 1)) t))
+        (hook1 (lambda (type event)
+                 (add-to-list 'types type)
+                 (setq hook1-var (+ hook1-var 1)) t))
         (hook2 (lambda (type event) (setq hook2-var (+ hook2-var 1)) t))
         (hook3 (lambda (type event) nil)))
     (snitch-test--clear-vars 'allow 'allow t)
@@ -706,6 +715,10 @@ event, and that returning nil from the hooks blocks the event."
     (should (equal hook1-var 8))
     (should (equal hook2-var 8))
 
+    (should (eq 2 (length types)))
+    (should (memq 'event types))
+    (should (memq 'allow types))
+
     ;; cleanup
     (snitch-test--restore-vars orig-vars)
     (snitch-test--cleanup)))
@@ -715,8 +728,11 @@ event, and that returning nil from the hooks blocks the event."
 event, and that returning nil causes snitch to accept the event."
   (setq hook1-var 0)
   (setq hook2-var 0)
+  (setq types '())
   (let ((orig-vars (snitch-test--save-vars t))
-        (hook1 (lambda (type event) (setq hook1-var (+ hook1-var 1)) t))
+        (hook1 (lambda (type event)
+                 (add-to-list 'types type)
+                 (setq hook1-var (+ hook1-var 1)) t))
         (hook2 (lambda (type event) (setq hook2-var (+ hook2-var 1)) t))
         (hook3 (lambda (type event) nil)))
     (snitch-test--clear-vars 'deny 'deny t)
@@ -753,6 +769,10 @@ event, and that returning nil causes snitch to accept the event."
     (should (equal hook1-var 8))
     (should (equal hook2-var 8))
 
+    (should (eq 2 (length types)))
+    (should (memq 'event types))
+    (should (memq 'block types))
+
     ;; cleanup
     (snitch-test--restore-vars orig-vars)
     (snitch-test--cleanup)))
@@ -763,8 +783,11 @@ because of a whitelist entry, and that returning nil causes
 snitch to block it."
   (setq hook1-var 0)
   (setq hook2-var 0)
+  (setq types '())
   (let ((orig-vars (snitch-test--save-vars t))
-        (hook1 (lambda (type event) (setq hook1-var (+ hook1-var 1)) t))
+        (hook1 (lambda (type event)
+                 (add-to-list 'types type)
+                 (setq hook1-var (+ hook1-var 1)) t))
         (hook2 (lambda (type event) (setq hook2-var (+ hook2-var 1)) t))
         (hook3 (lambda (type event) nil)))
     (snitch-test--clear-vars 'deny 'deny t)
@@ -805,6 +828,10 @@ snitch to block it."
     (should (equal hook1-var 8))
     (should (equal hook2-var 8))
 
+    (should (eq 2 (length types)))
+    (should (memq 'event types))
+    (should (memq 'whitelist types))
+
     ;; cleanup
     (snitch-test--restore-vars orig-vars)
     (snitch-test--cleanup)))
@@ -815,8 +842,11 @@ event because of the blacklist, and that returning nil causes
 snitch to accept it."
   (setq hook1-var 0)
   (setq hook2-var 0)
+  (setq types '())
   (let ((orig-vars (snitch-test--save-vars t))
-        (hook1 (lambda (type event) (setq hook1-var (+ hook1-var 1)) t))
+        (hook1 (lambda (type event)
+                 (add-to-list 'types type)
+                 (setq hook1-var (+ hook1-var 1)) t))
         (hook2 (lambda (type event) (setq hook2-var (+ hook2-var 1)) t))
         (hook3 (lambda (type event) nil)))
     (snitch-test--clear-vars 'allow 'allow t)
@@ -856,6 +886,10 @@ snitch to accept it."
     (snitch-test--process "curl" t)
     (should (equal hook1-var 8))
     (should (equal hook2-var 8))
+
+    (should (eq 2 (length types)))
+    (should (memq 'event types))
+    (should (memq 'blacklist types))
 
     ;; cleanup
     (snitch-test--restore-vars orig-vars)
