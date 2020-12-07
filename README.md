@@ -83,24 +83,24 @@ customizing ‘snitch-log-verbose’.
 An example log entry is below, split to several lines for display.
 In the actual log, non-verbose logs are a single line.
 
-  [2020-12-03 00:16:50] (whitelisted) -- #s(snitch-network-entry \
-       1606951010.2966838 helm-M-x-execute-command \
-       /home/trevor/.emacs.d/elpa/helm-20201019.715/helm-command.el \
-       helm 127.0.0.1 127.0.0.1 64222 nil)
+>  [2020-12-03 00:16:50] (whitelisted) -- #s(snitch-network-entry \
+>       1606951010.2966838 helm-M-x-execute-command \
+>       /home/trevor/.emacs.d/elpa/helm-20201019.715/helm-command.el \
+>       helm 127.0.0.1 127.0.0.1 64222 nil)
 
 With `snitch-log-verbose' enabled, log entries actually do take
 several lines:
 
-  [2020-12-03 01:11:27] (blocked) --
-  (snitch-network-entry "snitch-network-entry-157d34506664"
-
-    :timestamp 1606954287.770638
-    :src-fn snitch--wrap-make-network-process
-    :src-path "/home/trevor/.emacs.d/snitch/snitch.el"
-    :src-pkg user
-    :proc-name "google.com"
-    :host "google.com"
-    :port 80)
+>  [2020-12-03 01:11:27] (blocked) --
+>  (snitch-network-entry "snitch-network-entry-157d34506664"
+>
+>    :timestamp 1606954287.770638
+>    :src-fn snitch--wrap-make-network-process
+>    :src-path "/home/trevor/.emacs.d/snitch/snitch.el"
+>    :src-pkg user
+>    :proc-name "google.com"
+>    :host "google.com"
+>    :port 80)
 
 
 === USAGE ===
@@ -112,10 +112,10 @@ on startup time.
 
 An example initialization using ‘use-package’ might look like so:
 
-  (use-package snitch
-    :ensure t
-    :config
-    (snitch-init))
+>  (use-package snitch
+>    :ensure t
+>    :config
+>    (snitch-init))
 
 snitch then runs in the background, performing its duties according
 to your configuration, and logging in its dedicated buffer.
@@ -172,15 +172,15 @@ default, but allow certain packages to communicate.  This example
 demonstrates permitting only the ’elfeed’ package to create network
 connections:
 
-  (use-package snitch
-    :ensure t
-    :config
-    (setq snitch-network-policy 'deny)
-    (setq snitch-process-policy 'deny)
-    (setq snitch-log-policy '(blocked whitelisted allowed))
-    (add-to-list 'snitch-network-whitelist
-                  (cons #'snitch-filter/src-pkg '(elfeed)))
-    (snitch-init))
+>  (use-package snitch
+>    :ensure t
+>    :config
+>    (setq snitch-network-policy 'deny)
+>    (setq snitch-process-policy 'deny)
+>    (setq snitch-log-policy '(blocked whitelisted allowed))
+>    (add-to-list 'snitch-network-whitelist
+>                  (cons #'snitch-filter/src-pkg '(elfeed)))
+>    (snitch-init))
 
 
 ==== COMMON CONFIG: ALLOW + AUDIT ====
@@ -188,14 +188,14 @@ connections:
 Another useful configuration is to allow all accesses, but log them
 to keep an audit trail.  This might look like so:
 
-  (use-package snitch
-    :ensure t
-    :config
-    (setq snitch-network-policy 'allow)
-    (setq snitch-process-policy 'allow)
-    (setq snitch-log-policy '(allowed blocked whitelisted blacklisted))
-    (setq snitch-log-verbose t)
-    (snitch-init))
+>  (use-package snitch
+>    :ensure t
+>    :config
+>    (setq snitch-network-policy 'allow)
+>    (setq snitch-process-policy 'allow)
+>    (setq snitch-log-policy '(allowed blocked whitelisted blacklisted))
+>    (setq snitch-log-verbose t)
+>    (snitch-init))
 
 
 ==== FILTER RULES ====
@@ -205,17 +205,17 @@ variables, are specified as cons cells where the car is a filtering
 function, and the cdr is a list of arguments to pass to the
 function in addition to the event object:
 
-(setq snitch-network-whitelist
-  '(
-     (filter-fn1 . (argQ))
-     (filter-fn2 . (argN argP))
-   ))
+> (setq snitch-network-whitelist
+>   '(
+>      (filter-fn1 . (argQ))
+>      (filter-fn2 . (argN argP))
+>    ))
 
 Each filter function should have a prototype accepting EVENT as the
 snitch event object in consideration, and ARGS as the list of
 arguments from the cdr of the rules entry:
 
-  (defun filter-fn1 (event &rest args))
+>  (defun filter-fn1 (event &rest args))
 
 EVENT is an eieio object defined by ‘snitch-network-entry’ or
 ‘snitch-process-entry’, and inheriting from ‘snitch-source’.
@@ -223,24 +223,24 @@ EVENT is an eieio object defined by ‘snitch-network-entry’ or
 A trivial function which matches if a single string in the event
 object matches a known value might look like so:
 
-  (defun filter-fn1 (event name)
-    (string-equal (oref event proc-name) name))
+>  (defun filter-fn1 (event name)
+>    (string-equal (oref event proc-name) name))
 
 While a more complex filter function might treat ARGS as an
 associative list of key/value pairs:
 
-  (defun filter-fn2 (event &rest alist)
-    (cl-loop for (aslot . avalue) in alist with accept = t
-             do
-             (let ((evalue (eieio-oref event aslot))
-                   (val-type (type-of avalue)))
-               (unless (cond
-                        ((eq val-type 'string) (string-equal avalue evalue))
-                        (t (eq avalue evalue)))
-                 (setq accept nil)))
-             when (null accept)
-             return nil
-             finally return accept))
+>  (defun filter-fn2 (event &rest alist)
+>    (cl-loop for (aslot . avalue) in alist with accept = t
+>             do
+>             (let ((evalue (eieio-oref event aslot))
+>                   (val-type (type-of avalue)))
+>               (unless (cond
+>                        ((eq val-type 'string) (string-equal avalue evalue))
+>                        (t (eq avalue evalue)))
+>                 (setq accept nil)))
+>             when (null accept)
+>             return nil
+>             finally return accept))
 
 The return value of a filter function determines whether the filter
 should take effect.  t means "take effect" and nil means "do not
@@ -259,7 +259,7 @@ snitch’s final decision.
 
 Hook functions take two arguments, the type and the event object:
 
-  (defun snitch-hook (type event))
+>  (defun snitch-hook (type event))
 
 TYPE is one of `snitch-hook-types', and corresponds with the names
 of the hook lists.  This argument is provided so you can define one
@@ -317,12 +317,12 @@ feeds with the elfeed package, which uses timers for web requests:
 
 With ‘snitch-trace-timers’ set to nil (tracing disabled):
 
-  [2020-12-07 21:32:56] (allowed) -- #s(snitch-network-entry \
-    1607373176.6757963 \
-    timer-event-handler \
-    /usr/share/emacs/27.1/lisp/emacs-lisp/timer.el \
-    site-lisp \
-    www.smbc-comics.com www.smbc-comics.com 443 nil)
+>  [2020-12-07 21:32:56] (allowed) -- #s(snitch-network-entry \
+>    1607373176.6757963 \
+>    timer-event-handler \
+>    /usr/share/emacs/27.1/lisp/emacs-lisp/timer.el \
+>    site-lisp \
+>    www.smbc-comics.com www.smbc-comics.com 443 nil)
 
 Notice how the source is the function ‘timer-event-handler’ in
 ‘timer.el’, part of the special ‘site-lisp’ package?  *All*
@@ -332,12 +332,12 @@ function.  It is impossible to filter on the true source.
 
 Now with ‘snitch-trace-timers’ set to t (tracing enabled):
 
-  [2020-12-07 21:33:06] (allowed) -- #s(snitch-network-entry \
-    1607373186.6863618 \
-    elfeed-insert-html
-    /home/trevor/.emacs.d/elpa/elfeed-20200910.239/elfeed-show.el \
-    elfeed \
-    www.smbc-comics.com www.smbc-comics.com 443 nil)
+>  [2020-12-07 21:33:06] (allowed) -- #s(snitch-network-entry \
+>    1607373186.6863618 \
+>    elfeed-insert-html
+>    /home/trevor/.emacs.d/elpa/elfeed-20200910.239/elfeed-show.el \
+>    elfeed \
+>    www.smbc-comics.com www.smbc-comics.com 443 nil)
 
 For this event, snitch has successfully traced through the timer to
 find the true source, ‘elfeed-insert-html’ in the ‘elfeed’ package!
