@@ -184,7 +184,7 @@ modification and returns the result."
     (if (>= (length snitch--timer-alist) snitch--max-timer-backtraces)
         (when snitch-print-timer-warnings
           (message "*snitch warning* too many timers, discarding: %s"
-                   (timer--function timer)))
+                   (snitch--fn-repr (timer--function timer))))
       (progn
         (setq snitch--timer-alist
               (cons (cons timer (cons bt timeout-fn)) snitch--timer-alist))
@@ -201,7 +201,7 @@ any that have timed out."
              (when match
                (when snitch-print-timer-warnings
                  (message "*snitch warning* timer timed out: %s"
-                          (timer--function timer)))
+                          (snitch--fn-repr (timer--function timer))))
                (setq snitch--timer-removed-count
                      (+ snitch--timer-removed-count 1))
                (setq snitch--timer-alist
@@ -218,7 +218,7 @@ present."
         (when (and (null match)
                    snitch-print-timer-warnings)
           (message "*snitch warning* remove unknown timer: %s"
-                   (timer--function timer))
+                   (snitch--fn-repr (timer--function timer)))
           (setq snitch--timer-missed-count
                 (+ snitch--timer-missed-count 1)))
         (when match
