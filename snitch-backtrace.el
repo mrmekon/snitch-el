@@ -199,20 +199,26 @@ it is enabled, and a matching timer is found, the backtraces are
 concatenated together."
   (setq stack '())
   (setq timer-args 'nil)
-  (let ((frames (backtrace-get-frames)))
+  (let* ((frames (backtrace-get-frames))
+         ;; 5 is the magic number of frames to skip out of the
+         ;; snitch-related calls (0 indexed, so idx > 4):
+         ;;
+         ;; 1) backtrace-get-frames
+         ;; 2) let (here in snitch--backtrace)
+         ;; 3) snitch--backtrace
+         ;; 4) let* (in snitch wrapper functions)
+         ;; 5) snitch wrapper fn (ex: snitch--wrap-make-network-process)
+         ;;
+         ;; This only works correctly if all of snitch’s hooking
+         ;;functions immediately call (snitch-backtrace) in a let block.
+         ;;
+         ;; The second frame, ’let’, is mysteriously absent when this
+         ;; package is byte-compiled.
+         (skip-frames (if (eq 'let* (backtrace-frame-fun (nth 1 frames)))
+                          4
+                        3)))
     (dotimes (idx (length frames))
-      ;; 5 is the magic number of frames to skip out of the
-      ;; snitch-related calls (0 indexed, so idx > 4):
-      ;;
-      ;; 1) backtrace-get-frames
-      ;; 2) let (here in snitch--backtrace)
-      ;; 3) snitch--backtrace
-      ;; 4) let* (in snitch wrapper functions)
-      ;; 5) snitch wrapper fn (ex: snitch--wrap-make-network-process)
-      ;;
-      ;; This only works correctly if all of snitch’s hooking
-      ;;functions immediately call (snitch-backtrace) in a let block.
-      (if (> idx 4) ; skip frames in snitch
+      (if (> idx skip-frames)
           (let* ((frame (nth idx frames))
                  (fun (backtrace-frame-fun frame))
                  ;; if function is a lambda, just send back the
@@ -235,8 +241,6 @@ concatenated together."
                               'compiled-function)
                              (t fun)))
                  (path (snitch--find-function-file fun))
-                 (file (if path (file-name-base path) nil))
-                 (dir (if path (file-name-directory path) nil))
                  (package (if path (snitch--package-from-path path) nil)))
             ;; if function is the timer handler, save its timer object
             ;; to lookup the backtrace for that timer later

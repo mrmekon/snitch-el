@@ -114,7 +114,7 @@ log message. "
    ;; process events
    ((snitch-process-entry-p event)
     (propertize logmsg
-                'snitch-class snitch-process-entry
+                'snitch-class 'snitch-process-entry
                 'snitch-src-fn (oref event src-fn)
                 'snitch-src-path (oref event src-path)
                 'snitch-src-pkg (oref event src-pkg)
@@ -124,7 +124,7 @@ log message. "
    ;; network events
    ((snitch-network-entry-p event)
     (propertize logmsg
-                'snitch-class snitch-network-entry
+                'snitch-class 'snitch-network-entry
                 'snitch-src-fn (oref event src-fn)
                 'snitch-src-path (oref event src-path)
                 'snitch-src-pkg (oref event src-pkg)
@@ -294,13 +294,15 @@ the filter to the customization variable if appropriate."
   (when (null snitch--log-filter-buffer)
     (snitch--init-log-filter-buffer))
   ;; set initial contents of buffer so it opens to the correct size
-  (snitch--redraw-log-filter-buffer event fields)
+  (snitch--redraw-log-filter-buffer event nil)
   ;; display window
   (snitch--show-log-filter-window)
   ;; read user input continuously until saved or aborted
-  (setq finished nil)
-  (setq fields '())
-  (let ((key-map (snitch--log-filter-map event)))
+  (let ((fields nil)
+        (finished nil)
+        (slot-value-alist nil)
+        (black-white nil)
+        (key-map (snitch--log-filter-map event)))
     (while (not finished)
       ;; redraw to update font properties
       (snitch--redraw-log-filter-buffer event fields)
@@ -322,40 +324,38 @@ the filter to the customization variable if appropriate."
             (when slot
               (if (member slot fields)
                   (setq fields (delete slot fields))
-                (setq fields (cons slot fields))))))))))
-  ;; close filter window
-  (snitch--hide-log-filter-window snitch--log-filter-buffer)
-  ;; generate filter
-  (when fields
-    (setq slot-value-alist '())
-    ;; make an alist of (slot . value) pairs for the filter function
-    ;; to match against
-    (cl-loop for slot in fields
-             do
-             (setq slot-value-alist
-                   (cons (cons slot (eieio-oref event slot)) slot-value-alist)))
-    ;; query user for whether this should go in blacklist or whitelist
-    (setq black-white nil)
-    (while (null black-white)
-      (let* ((key (read-key-sequence "[b]lacklist or [w]hitelist? ")))
-        (cond
-         ;; ignore, probably a control character (arrow keys, etc)
-         ;; must come first to short-circuit before string comparisons
-         ((not (stringp key)) nil)
-         ((string-equal key "b") (setq black-white "blacklist"))
-         ((string-equal key "w") (setq black-white "whitelist")))))
-    ;; append the new entry to the correct defcustom list, and
-    ;; save as default customization.
-    (let* ((filter (cons #'snitch-filter/log-filter slot-value-alist))
-           (orig-list (cond
-                       ((snitch-network-entry-p event)
-                        (intern-soft (format "snitch-network-%s" black-white)))
-                       ((snitch-process-entry-p event)
-                        (intern-soft (format "snitch-process-%s" black-white)))
-                       (t nil)))
-           (orig-val (eval orig-list))
-           (new-list (cons filter orig-val)))
-      (customize-save-variable orig-list new-list))))
+                (setq fields (cons slot fields)))))))))
+    ;; close filter window
+    (snitch--hide-log-filter-window snitch--log-filter-buffer)
+    ;; generate filter
+    (when fields
+      ;; make an alist of (slot . value) pairs for the filter function
+      ;; to match against
+      (cl-loop for slot in fields
+               do
+               (setq slot-value-alist
+                     (cons (cons slot (eieio-oref event slot)) slot-value-alist)))
+      ;; query user for whether this should go in blacklist or whitelist
+      (while (null black-white)
+        (let* ((key (read-key-sequence "[b]lacklist or [w]hitelist? ")))
+          (cond
+           ;; ignore, probably a control character (arrow keys, etc)
+           ;; must come first to short-circuit before string comparisons
+           ((not (stringp key)) nil)
+           ((string-equal key "b") (setq black-white "blacklist"))
+           ((string-equal key "w") (setq black-white "whitelist")))))
+      ;; append the new entry to the correct defcustom list, and
+      ;; save as default customization.
+      (let* ((filter (cons #'snitch-filter/log-filter slot-value-alist))
+             (orig-list (cond
+                         ((snitch-network-entry-p event)
+                          (intern-soft (format "snitch-network-%s" black-white)))
+                         ((snitch-process-entry-p event)
+                          (intern-soft (format "snitch-process-%s" black-white)))
+                         (t nil)))
+             (orig-val (eval orig-list))
+             (new-list (cons filter orig-val)))
+        (customize-save-variable orig-list new-list)))))
 
 (defun snitch--log-filter-map-slot-from-key (map key)
   "Given a map from ‘snitch--log-filter-map’, returns the slot
@@ -373,31 +373,34 @@ brackets.  The correct set of fields is returned based on the
 given event type.  All of this stuff is used to display the
 fields, and to interpret which field to select when receiving
 user keypresses."
-  (setq common-alist
-        '((src-fn . (key "f" name "function"
-                         mnemonic-name "[f]unction"))
-          (src-path . (key "p" name "path"
-                           mnemonic-name "[p]ath"))
-          (src-pkg . (key "k" name "package"
-                          mnemonic-name "pac[k]age"))
-          (proc-name . (key "n" name "name"
-                          mnemonic-name "[n]ame"))))
-  (setq network-alist
-        '((host . (key "h" name "host"
-                       mnemonic-name "[h]ost"))
-          (port . (key "o" name "port"
-                       mnemonic-name "p[o]rt"))
-          (family . (key "m" name "family"
-                       mnemonic-name "fa[m]ily"))))
-  (setq process-alist
-        '((executable . (key "x"name "executable"
-                             mnemonic-name "e[x]ecutable"))
-          (args . (key "g" name "args"
-                       mnemonic-name "ar[g]s"))))
-  (cond
-   ((snitch-network-entry-p event) (append common-alist network-alist))
-   ((snitch-process-entry-p event) (append common-alist process-alist))
-   (t common-alist)))
+  (let ((common-alist nil)
+        (network-alist nil)
+        (process-alist nil))
+    (setq common-alist
+          '((src-fn . (key "f" name "function"
+                           mnemonic-name "[f]unction"))
+            (src-path . (key "p" name "path"
+                             mnemonic-name "[p]ath"))
+            (src-pkg . (key "k" name "package"
+                            mnemonic-name "pac[k]age"))
+            (proc-name . (key "n" name "name"
+                              mnemonic-name "[n]ame"))))
+    (setq network-alist
+          '((host . (key "h" name "host"
+                         mnemonic-name "[h]ost"))
+            (port . (key "o" name "port"
+                         mnemonic-name "p[o]rt"))
+            (family . (key "m" name "family"
+                           mnemonic-name "fa[m]ily"))))
+    (setq process-alist
+          '((executable . (key "x"name "executable"
+                               mnemonic-name "e[x]ecutable"))
+            (args . (key "g" name "args"
+                         mnemonic-name "ar[g]s"))))
+    (cond
+     ((snitch-network-entry-p event) (append common-alist network-alist))
+     ((snitch-process-entry-p event) (append common-alist process-alist))
+     (t common-alist))))
 
 (defun snitch--redraw-log-filter-buffer (evt selected)
   "Draw the text contents of the log-filter menu based on the

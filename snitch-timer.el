@@ -194,7 +194,7 @@ modification and returns the result."
 (defun snitch--remove-timed-out-timers ()
   "Iterate of all of snitch's saved timer backtraces and remove
 any that have timed out."
-  (cl-loop for (timer . (bt . timeout-fn)) in snitch--timer-alist
+  (cl-loop for (timer . (_bt . timeout-fn)) in snitch--timer-alist
            when (funcall timeout-fn)
            do
            (let ((match (assq timer snitch--timer-alist)))
@@ -308,7 +308,7 @@ log.  If ALIST is t, also prints the currently cached timers."
   (message "timer missed: %d" snitch--timer-missed-count)
   (when alist
     (message "timer alist: %s" snitch--timer-alist)
-    (cl-loop for (timer . (bt . timeout-fn)) in snitch--timer-alist
+    (cl-loop for (_timer . (_bt . timeout-fn)) in snitch--timer-alist
              do (message "timeout? %s" (funcall timeout-fn)))))
 
 (defun snitch--activate-timer-trace ()
