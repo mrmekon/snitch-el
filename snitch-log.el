@@ -98,13 +98,13 @@ can be used to deserialize back into an object with eval."
   ;; standard output stream to a function that consumes the output
   ;; char by char.  This must be reversed and concatenated to
   ;; produce the final string.
-  (setq pretty-obj nil)
-  (let ((old-std standard-output))
+  (let ((pretty-obj nil)
+        (old-std standard-output))
     (setq standard-output (lambda (c) (setq pretty-obj (cons c pretty-obj))))
     (object-write event)
     (setq pretty-obj (concat (nreverse pretty-obj)))
-    (setq standard-output old-std))
-  pretty-obj)
+    (setq standard-output old-std)
+    pretty-obj))
 
 (defun snitch--propertize (logmsg event)
   "Add text properties to LOGMSG with elements from EVENT.  This

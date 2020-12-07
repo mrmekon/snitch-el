@@ -12,6 +12,7 @@ fi
 mkdir "$PKG"
 sh gen_readme.sh
 cp snitch*.el "$PKG"
+rm "$PKG/snitch-test.el"
 cp README.md "$PKG"
 tar -cf "$PKG.tar" "$PKG"
 

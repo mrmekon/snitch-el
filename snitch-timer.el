@@ -210,25 +210,25 @@ any that have timed out."
 (defun snitch--remove-timers (timers)
   "Remove all timers in TIMERS from the timer backtrace cache, if
 present."
-  (setq total-timers (length timers))
-  (setq removed-timers 0)
-  (cl-loop
-   for timer in timers
-   do (let ((match (assq timer snitch--timer-alist)))
-        (when (and (null match)
-                   snitch-print-timer-warnings)
-          (message "*snitch warning* remove unknown timer: %s"
-                   (snitch--fn-repr (timer--function timer)))
-          (setq snitch--timer-missed-count
-                (+ snitch--timer-missed-count 1)))
-        (when match
-          (setq snitch--timer-removed-count
-                (+ snitch--timer-removed-count 1))
-          (setq removed-timers (1+ removed-timers))
-          (setq snitch--timer-alist
-                (delq match snitch--timer-alist)))))
-  ;;(message "removed %d of %d timers" removed-timers total-timers)
-  (list removed-timers total-timers))
+  (let ((total-timers (length timers))
+        (removed-timers 0))
+    (cl-loop
+     for timer in timers
+     do (let ((match (assq timer snitch--timer-alist)))
+          (when (and (null match)
+                     snitch-print-timer-warnings)
+            (message "*snitch warning* remove unknown timer: %s"
+                     (snitch--fn-repr (timer--function timer)))
+            (setq snitch--timer-missed-count
+                  (+ snitch--timer-missed-count 1)))
+          (when match
+            (setq snitch--timer-removed-count
+                  (+ snitch--timer-removed-count 1))
+            (setq removed-timers (1+ removed-timers))
+            (setq snitch--timer-alist
+                  (delq match snitch--timer-alist)))))
+    ;;(message "removed %d of %d timers" removed-timers total-timers)
+    (list removed-timers total-timers)))
 
 (defun snitch--remove-timer-backtrace (orig-fn timer)
   "Remove a timer from snitch’s cache.  This function is wrapped

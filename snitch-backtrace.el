@@ -36,6 +36,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Code:
+(require 'cl-macs) ; cl loops
+(require 'package) ; backtrace package sources
+(require 'backtrace)
+
+(require 'snitch-timer)
 
 ;; Since the backtrace functions might be called extremely often,
 ;; particularly when timer tracing is enabled, much of the metadata
@@ -197,9 +202,9 @@ backtrace if this one originated from a timer callback.
 ‘snitch-trace-timers’ must be t for this to have any effect.  If
 it is enabled, and a matching timer is found, the backtraces are
 concatenated together."
-  (setq stack '())
-  (setq timer-args 'nil)
-  (let* ((frames (backtrace-get-frames))
+  (let* ((stack '())
+         (timer-args nil)
+         (frames (backtrace-get-frames))
          ;; 5 is the magic number of frames to skip out of the
          ;; snitch-related calls (0 indexed, so idx > 4):
          ;;
@@ -247,10 +252,10 @@ concatenated together."
             (if (eq fun #'timer-event-handler)
                 (setq timer-args (car (backtrace-frame-args frame))))
             ;;(message "frame %d: %s (%s) [%s]" idx fun path package)
-            (push (list clean-fun path package) stack)))))
-  (if follow-timer
-      (snitch--maybe-add-timer-backtrace stack timer-args)
-    (nreverse stack)))
+            (push (list clean-fun path package) stack))))
+    (if follow-timer
+        (snitch--maybe-add-timer-backtrace stack timer-args)
+      (nreverse stack))))
 
 (defun snitch--package-type-more-important (a b)
   "Return t if package type of 'a' is more important than the
