@@ -663,7 +663,8 @@ the globally configured log filters."
   "Wrap a call to make-process in the snitch firewall decision
 engine.  ORIG-FUN is called only if the snitch firewall rules
 permit it."
-  (let* ((caller (snitch--responsible-caller (snitch--backtrace)))
+  (let* ((bt (snitch--backtrace))
+         (caller (snitch--responsible-caller bt))
          (event (snitch-process-entry
                  :timestamp (time-to-seconds (current-time))
                  :src-fn (nth 0 caller)
@@ -679,7 +680,8 @@ permit it."
   "Wrap a call to make-network-process in the snitch firewall
 decision engine.  ORIG-FUN is called only if the snitch firewall
 rules permit it."
-  (let* ((caller (snitch--responsible-caller (snitch--backtrace)))
+  (let* ((bt (snitch--backtrace))
+         (caller (snitch--responsible-caller bt))
          (event (snitch-network-entry
                  :timestamp (time-to-seconds (current-time))
                  :src-fn (nth 0 caller)

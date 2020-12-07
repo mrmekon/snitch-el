@@ -163,11 +163,36 @@ one of the following special values:
             'site-lisp
           'user)))))
 
-(defun snitch--backtrace ()
+(defun snitch--backtrace (&optional follow-timer)
+  "Return a full list of backtrace entries (the full function
+call stack) where each entry is a list containing (FUNCTION PATH
+PACKAGE).  Entries related to the snitch callstack are
+filtered out.
+
+FUNCTION is a function symbol if available, or one of the special
+symbols ‘lambda’, ‘macro’, or ‘compiled-function’ otherwise.
+
+PATH is the full path to the file FUNCTION is defined in, if
+known.
+
+PACKAGE is the package that FUNCTION is defined in, or one of the
+special symbols ‘built-in’, ‘site-lisp’, ‘user’, or nil if
+unknown."
   (setq stack '())
   (let ((frames (backtrace-get-frames)))
     (dotimes (idx (length frames))
-      (if (> idx 3) ; skip frames in snitch
+      ;; 5 is the magic number of frames to skip out of the
+      ;; snitch-related calls (0 indexed, so idx > 4):
+      ;;
+      ;; 1) backtrace-get-frames
+      ;; 2) let (here in snitch--backtrace)
+      ;; 3) snitch--backtrace
+      ;; 4) let* (in snitch wrapper functions)
+      ;; 5) snitch wrapper fn (ex: snitch--wrap-make-network-process)
+      ;;
+      ;; This only works correctly if all of snitch’s hooking
+      ;;functions immediately call (snitch-backtrace) in a let block.
+      (if (> idx 4) ; skip frames in snitch
           (let* ((frame (nth idx frames))
                  (fun (backtrace-frame-fun frame))
                  ;; if function is a lambda, just send back the

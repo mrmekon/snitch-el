@@ -273,26 +273,22 @@ correct most-recent frames."
   (let* ((backtrace (snitch--backtrace))
          (frames (length backtrace)))
     (should (> frames 5))
-    ;; first frame: lambda
-    (should (equal (nth 0 (nth 0 backtrace)) 'lambda))
-    (should (equal (nth 1 (nth 0 backtrace)) nil))
-    (should (equal (nth 2 (nth 0 backtrace)) nil))
     ;; second frame: ert--run-test-internal
-    (should (equal (nth 0 (nth 1 backtrace)) #'ert--run-test-internal))
+    (should (equal (nth 0 (nth 0 backtrace)) #'ert--run-test-internal))
+    (should (string-suffix-p "/emacs-lisp/ert.el" (nth 1 (nth 0 backtrace))))
+    (should (equal (nth 2 (nth 0 backtrace)) 'built-in))
+    ;; third frame: ert-run-test
+    (should (equal (nth 0 (nth 1 backtrace)) #'ert-run-test))
     (should (string-suffix-p "/emacs-lisp/ert.el" (nth 1 (nth 1 backtrace))))
     (should (equal (nth 2 (nth 1 backtrace)) 'built-in))
-    ;; third frame: ert-run-test
-    (should (equal (nth 0 (nth 2 backtrace)) #'ert-run-test))
+    ;; fourth frame: ert-run-or-rerun-test
+    (should (equal (nth 0 (nth 2 backtrace)) #'ert-run-or-rerun-test))
     (should (string-suffix-p "/emacs-lisp/ert.el" (nth 1 (nth 2 backtrace))))
     (should (equal (nth 2 (nth 2 backtrace)) 'built-in))
-    ;; fourth frame: ert-run-or-rerun-test
-    (should (equal (nth 0 (nth 3 backtrace)) #'ert-run-or-rerun-test))
-    (should (string-suffix-p "/emacs-lisp/ert.el" (nth 1 (nth 3 backtrace))))
-    (should (equal (nth 2 (nth 3 backtrace)) 'built-in))
     ;; fifth frame: ert-run-tests
-    (should (equal (nth 0 (nth 4 backtrace)) #'ert-run-tests))
-    (should (string-suffix-p "/emacs-lisp/ert.el" (nth 1 (nth 4 backtrace))))
-    (should (equal (nth 2 (nth 4 backtrace)) 'built-in))))
+    (should (equal (nth 0 (nth 3 backtrace)) #'ert-run-tests))
+    (should (string-suffix-p "/emacs-lisp/ert.el" (nth 1 (nth 3 backtrace))))
+    (should (equal (nth 2 (nth 3 backtrace)) 'built-in))))
 
 (ert-deftest snitch-test-backtrace-lambdas ()
   "Test that backtraces get appropriately deeper when lambdas and
@@ -306,17 +302,18 @@ functions are added to the call stack."
     (should (> inner-frames middle-frames))
     (should (> middle-frames outer-frames))
     ;; verify middle backtrace adds a lambda+funcall
-    (should (equal (nth 0 (nth 0 middle-backtrace)) #'funcall))
-    (should (equal (nth 0 (nth 1 middle-backtrace)) #'let*))
-    (should (equal (nth 0 (nth 2 middle-backtrace)) 'lambda))
-    (should (equal (nth 0 (nth 3 middle-backtrace)) #'ert--run-test-internal))
+    (should (equal (nth 0 (nth 0 middle-backtrace)) #'let*))
+    (should (equal (nth 0 (nth 1 middle-backtrace)) 'lambda))
+    (should (equal (nth 0 (nth 2 middle-backtrace)) #'ert--run-test-internal))
+
     ;; verify inner backtrace adds a lambda+deepen+funcall
-    (should (equal (nth 0 (nth 0 inner-backtrace)) #'funcall))
-    (should (equal (nth 0 (nth 1 inner-backtrace)) #'let))
-    (should (equal (nth 0 (nth 2 inner-backtrace)) #'snitch-test--deepen-backtrace))
-    (should (equal (nth 0 (nth 3 inner-backtrace)) 'lambda))
+    (should (equal (nth 0 (nth 0 inner-backtrace)) #'let))
+    (should (equal (nth 0 (nth 1 inner-backtrace)) #'snitch-test--deepen-backtrace))
+    (should (equal (nth 0 (nth 2 inner-backtrace)) 'lambda))
+    (should (equal (nth 0 (nth 3 inner-backtrace)) #'funcall))
     (should (equal (nth 0 (nth 4 inner-backtrace)) #'let*))
-    (should (equal (nth 0 (nth 5 inner-backtrace)) #'ert--run-test-internal))))
+    (should (equal (nth 0 (nth 5 inner-backtrace)) 'lambda))
+    (should (equal (nth 0 (nth 6 inner-backtrace)) #'ert--run-test-internal))))
 
 (ert-deftest snitch-test-backtrace-timer ()
   "Test that backtraces show correct details when sourced from a
@@ -324,9 +321,11 @@ timer."
   (setq timer-bt nil)
   (run-with-timer 0 nil (lambda () (setq timer-bt (snitch--backtrace))))
   (while (null timer-bt) (sleep-for 0.1))
-  (should (equal (nth 0 (nth 2 timer-bt)) #'timer-event-handler))
-  (should (string-suffix-p "/emacs-lisp/timer.el" (nth 1 (nth 2 timer-bt))))
-  (should (equal (nth 2 (nth 2 timer-bt)) 'site-lisp)))
+  (should (equal (nth 0 (nth 1 timer-bt)) #'timer-event-handler))
+  (should (string-suffix-p "/emacs-lisp/timer.el" (nth 1 (nth 1 timer-bt))))
+  (should (equal (nth 2 (nth 1 timer-bt)) 'site-lisp))
+  ;; TODO: test timer expansion
+  )
 
 (ert-deftest snitch-test-backtrace-use-package ()
   "Test that backtraces show correct package source, in this case
@@ -338,10 +337,10 @@ snitch--backtrace's caller originates in use-package."
     (use-package-only-one "label" '() #'identity)
     (while (null bt) (sleep-for 0.1))
     (remove-function (symbol-function 'error) fn))
-  (should (equal (nth 0 (nth 3 bt)) #'use-package-only-one))
-  (should (string-suffix-p "/use-package-core.el" (nth 1 (nth 3 bt))))
+  (should (equal (nth 0 (nth 2 bt)) #'use-package-only-one))
+  (should (string-suffix-p "/use-package-core.el" (nth 1 (nth 2 bt))))
   ;; this is the important one
-  (should (equal (nth 2 (nth 3 bt)) 'use-package)))
+  (should (equal (nth 2 (nth 2 bt)) 'use-package)))
 
 (ert-deftest snitch-test-package-type-importance ()
   "Test relative importance of package types."
