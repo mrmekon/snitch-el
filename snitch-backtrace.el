@@ -37,47 +37,120 @@
 ;;
 ;;; Code:
 
-;; find all directories in elisp load path that are NOT in the user dir
-;; returns a list of strings
+;; Since the backtrace functions might be called extremely often,
+;; particularly when timer tracing is enabled, much of the metadata
+;; needed to flesh out backtraces is cached on first use.  This
+;; optimization brought execution time for (snitch--backtrace) down
+;; from 20ms to 1ms on my (quite fast) machine.
+;;
+;; TODO: invalidate, refresh, or limit size of these caches?
+;; snitch--package-dirs-cache might grow unbounded.
+
+(defvar snitch--site-lisp-dir-cache nil
+  "Cache a list of the emacs site-lisp directories.")
+
+(defvar snitch--site-lisp-root-cache nil
+  "Cache a list of the emacs site-lisp root directories.")
+
+(defvar snitch--function-to-file-cache nil
+  "Hash table cache of function names to the file the functions
+is defined in.")
+
+(defvar snitch--package-dirs-cache '()
+  "Hash table cache mapping elisp directories to active
+packages.")
+
+
+(defun snitch--fn-hash-cmp (a b)
+  "Hash comparison function for function/package hash table,
+since functions can be either function objects or strings and
+require different comparisons."
+  (if (and (functionp a) (functionp b))
+      (eq a b)
+    (equal a b)))
+
+(defun snitch--find-function-file (fn)
+  "Look up the file a function is defined in, caching it in a
+hash table for quicker subsequent accesses."
+  (unless snitch--function-to-file-cache
+    (define-hash-table-test 'snitch-fn-hash-cmp
+      #'snitch--fn-hash-cmp #'sxhash-equal)
+    (setq snitch--function-to-file-cache
+          (make-hash-table :test 'snitch-fn-hash-cmp)))
+  (let ((stored-file (gethash fn snitch--function-to-file-cache)))
+    (if stored-file (if (eq stored-file 'notfound) nil
+                      stored-file)
+      (let ((file (find-lisp-object-file-name fn 'defun)))
+        (if file
+            (puthash fn file snitch--function-to-file-cache)
+          (progn
+            (puthash fn 'notfound snitch--function-to-file-cache)
+            nil))))))
+
 (defun snitch--site-lisp-dirs ()
-  (let ((user-dir (expand-file-name package-user-dir)))
-    (cl-loop for dir in (elisp-load-path-roots)
-             unless (or (string-prefix-p user-dir dir)
-                        (string-prefix-p package-user-dir dir))
-             collect dir)))
+  "Find all directories in elisp load path that are not in the
+user dir."
+  (if (not snitch--site-lisp-dir-cache)
+      (let* ((user-dir (expand-file-name user-emacs-directory))
+             (pkg-dir (expand-file-name package-user-dir))
+             (dirs
+              (cl-loop for dir in (elisp-load-path-roots)
+                       unless (or
+                               (string-prefix-p user-dir dir)
+                               (string-prefix-p pkg-dir dir)
+                               (string-prefix-p package-user-dir dir)
+                               (string-prefix-p user-emacs-directory dir))
+                       collect dir)))
+        (setq snitch--site-lisp-dir-cache dirs)
+        dirs)
+    snitch--site-lisp-dir-cache))
 
-;; find the 'root' directories of (site-lisp-dirs), which is hopefully
-;; a list of all of the system-wide base dirs that contain elisp
-;; returns a list of strings
 (defun snitch--site-lisp-roots ()
-  (cl-loop for dir in (snitch--site-lisp-dirs)
-           if (or (string-equal "lisp" (file-name-base dir))
-                  (string-equal "site-lisp" (file-name-base dir)))
-           collect dir))
+  "Find the 'root' directories, hopefully a list of
+system-wide/non-user base directories containing elisp files."
+  (if (not snitch--site-lisp-root-cache)
+      (let ((dirs
+             (cl-loop for dir in (snitch--site-lisp-dirs)
+                      if (or (string-equal "lisp" (file-name-base dir))
+                             (string-equal "site-lisp" (file-name-base dir)))
+                      collect dir)))
+        (setq snitch--site-lisp-root-cache dirs)
+        dirs)
+    snitch--site-lisp-root-cache))
 
-;; check if a directory is a subdirectory of a system-wide elisp dir
-;; returns a boolean
 (defun snitch--dir-in-site-lisp (dir)
+  "Check if a directory is a subdirectory of one of the system-wide elisp directories found by `snitch--site-lisp-roots'."
   (not (null (cl-loop for site-dir in (snitch--site-lisp-roots)
                       if (string-prefix-p site-dir dir)
                       collect site-dir))))
 
-;; check if a directory belongs to a package tracked by the package manager.
-;; if so, returns its name as a symbol
-(defun snitch--package-from-dir (dir)
-  (nth 0
-       (cl-loop for (pkgname . pkgdesc) in (package--alist)
-                if (string-equal
-                    (file-name-as-directory dir)
-                    (file-name-as-directory (package-desc-dir (car pkgdesc))))
-                collect pkgname)))
+(defun snitch--fill-package-dirs-cache ()
+  "Cache package directories in a hash table for faster
+subsequent accesses."
+  (setq snitch--package-dirs-cache
+        (make-hash-table :test 'equal :size (length (package--alist))))
+  (cl-loop for (pkgname . pkgdesc) in (package--alist)
+           do
+           (puthash (file-name-as-directory (package-desc-dir (car pkgdesc)))
+                    pkgname
+                    snitch--package-dirs-cache))
+  (hash-table-count snitch--package-dirs-cache))
 
-;; try to guess a package name for a full path to a file.  returns a symbol,
-;; which is either an installed package name, or one of the three fixed values:
-;;  - 'built-in, if registered as a built-in package
-;;  - 'site-lisp, if found in a system-wide elisp directory
-;;  - 'user, if its source is unknown
+(defun snitch--package-from-dir (dir)
+  "Given a directory DIR, returns a package that owns the files
+in that directory."
+  (when (null snitch--package-dirs-cache)
+    (snitch--fill-package-dirs-cache))
+  (gethash (file-name-as-directory dir) snitch--package-dirs-cache))
+
 (defun snitch--package-from-path (path)
+  "Try to guess a package name for a full path to a file.
+Returns a symbol, which is either an installed package name, or
+one of the following special values:
+
+ - `built-in' -- registered as a built-in package
+ - `site-lisp' -- found in a system-wide elisp directory
+ - `user' -- unknown source"
   (let* ((dir (file-name-directory path))
          ;; twice to handle .el.gz
          (base (file-name-base (file-name-base path)))
@@ -116,7 +189,7 @@
                              ((byte-code-function-p fun)
                               'compiled-function)
                              (t fun)))
-                 (path (find-lisp-object-file-name fun 'defun))
+                 (path (snitch--find-function-file fun))
                  (file (if path (file-name-base path) nil))
                  (dir (if path (file-name-directory path) nil))
                  (package (if path (snitch--package-from-path path) nil)))
@@ -160,6 +233,15 @@ of the emacs internal activity.
 
 
 (defun snitch--responsible-caller (backtrace)
+  "Return a single entry from BACKTRACE which is snitch’s best
+guess for which function on the stack frame should be considered
+’responsible’ for causing this event.  snitch uses this to assign
+one single function/file/package as the responsible party for an
+event, for use in filtering.
+
+This is inherently fallible, based on prioritizing certain
+function types and locations over others with some very primitive
+heuristics.  It is, however, deterministic."
   (cl-loop for caller in backtrace with result = nil
            when (and (snitch--package-type-more-important
                       (nth 2 caller)
