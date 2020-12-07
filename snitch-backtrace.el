@@ -163,6 +163,19 @@ one of the following special values:
             'site-lisp
           'user)))))
 
+(defun snitch--maybe-add-timer-backtrace (bt timer)
+  "If the given backtrace BT terminates in the timer execution
+handler, check if snitch has cached the backtrace for the
+executing timer and append that backtrace to BT."
+  (let ((last-fn (nth 0 (car bt)))
+        (reverse-bt (nreverse bt)))
+    (if (eq last-fn #'timer-event-handler)
+        ;; timer event, concatenate backtraces
+        (let ((t-bt (snitch--get-timer-backtrace timer)))
+          (nconc reverse-bt t-bt))
+      ;; not a timer event
+      reverse-bt)))
+
 (defun snitch--backtrace (&optional follow-timer)
   "Return a full list of backtrace entries (the full function
 call stack) where each entry is a list containing (FUNCTION PATH
@@ -177,8 +190,15 @@ known.
 
 PACKAGE is the package that FUNCTION is defined in, or one of the
 special symbols ‘built-in’, ‘site-lisp’, ‘user’, or nil if
-unknown."
+unknown.
+
+FOLLOW-TIMER tells snitch to attempt to reconstruct a longer
+backtrace if this one originated from a timer callback.
+‘snitch-trace-timers’ must be t for this to have any effect.  If
+it is enabled, and a matching timer is found, the backtraces are
+concatenated together."
   (setq stack '())
+  (setq timer-args 'nil)
   (let ((frames (backtrace-get-frames)))
     (dotimes (idx (length frames))
       ;; 5 is the magic number of frames to skip out of the
@@ -218,9 +238,15 @@ unknown."
                  (file (if path (file-name-base path) nil))
                  (dir (if path (file-name-directory path) nil))
                  (package (if path (snitch--package-from-path path) nil)))
+            ;; if function is the timer handler, save its timer object
+            ;; to lookup the backtrace for that timer later
+            (if (eq fun #'timer-event-handler)
+                (setq timer-args (car (backtrace-frame-args frame))))
             ;;(message "frame %d: %s (%s) [%s]" idx fun path package)
-            (add-to-list 'stack (list clean-fun path package))))))
-  (reverse stack))
+            (push (list clean-fun path package) stack)))))
+  (if follow-timer
+      (snitch--maybe-add-timer-backtrace stack timer-args)
+    (nreverse stack)))
 
 (defun snitch--package-type-more-important (a b)
   "Return t if package type of 'a' is more important than the

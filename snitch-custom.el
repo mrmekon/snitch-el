@@ -322,6 +322,71 @@ Returning nil interrupts the block, allowing the event to pass."
   "Face for log filter wizard, selected entries"
   :group 'snitch-faces)
 
+
+;;
+;;
+;; Timers
+;;
+;;
+
+(defgroup snitch-timer nil
+  "Options related to when and how snitch monitors timers."
+  :group 'snitch-timer
+  :prefix "snitch-")
+
+(defcustom snitch-trace-timers t
+  "Whether to decorate timer callbacks with backtraces, so snitch
+can identify the package source of an event that was scheduled on
+a timer.
+
+This must be configured before calling ‘snitch-init’.  If it is
+changed while snitch is running, call ‘snitch-restart’.
+
+Enabling this requires snitch to intercept all emacs timers.
+This can cause significant delays if there are very many timers,
+or very high-speed timers.  Use ‘snitch-timer-blacklist’ to
+exclude specific timers from snitch’s tracking.
+
+You can run ‘snitch-monitor-unique-timer-fns’ to find out if any
+timers are running often.  Use ‘M-x describe-function <RET>
+snitch-monitor-unique-timer-fns’ for more."
+  :type 'boolean
+  :group 'snitch-timer)
+
+;; TODO: hook this up, and consider a whitelist too
+;;(defcustom snitch-timer-blacklist
+;;  '(
+;;    #'isearch-lazy-highlight-start
+;;    #'undo-auto--boundary-timer
+;;    #'helm-M-x--notify-prefix-arg
+;;    #'helm-ff--cache-mode-refresh
+;;    #'helm-match-line-cleanup
+;;    #'company-idle-begin
+;;    )
+;;  "List of timer functions to skip decorating with backtraces
+;;when ‘snitch-trace-timers’ is t.  Backtrace decoration takes
+;;time, and may cause noticeable delays if coupled with high-speed
+;;timers.
+;;
+;;Functions can be specified as symbols, or, for byte-compiled
+;;functions and lambdas, as the SHA1 hash digest of the byte code
+;;or lambda expression in hex string format.
+;;
+;;You can run ‘snitch-monitor-unique-timer-fns’ to find out if any
+;;timers are running often.  Use ‘M-x describe-function <RET>
+;;snitch-monitor-unique-timer-fns’ for more.  This function also
+;;displays the SHA1 hash of unnamed functions."
+;;  :type '(repeat (choice (function) (string)))
+;;  :group 'snitch-timer)
+
+(defcustom snitch-print-timer-warnings t
+  "Whether snitch should output warnings when the functions
+tracking timer backtraces encounter an unusual situation, such as
+a missing timer or a timer that never fires."
+  :type 'boolean
+  :group 'snitch-timer)
+
+
 (provide 'snitch-custom)
 
 ;;; snitch-custom.el ends here
