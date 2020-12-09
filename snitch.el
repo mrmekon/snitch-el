@@ -119,6 +119,35 @@
 ;; >    :port 80)
 ;;
 ;;
+;; === GETTING SNITCH ===
+;;
+;; snitch is not currently published in any package repositories
+;; (*ELPA).  It can be installed by any package manager that supports
+;; git repositories, or manually.
+;;
+;; quelpa:
+;;
+;; >  (quelpa '(snitch :repo "mrmekon/snitch-el" :fetcher github))
+;;
+;; use-package + quelpa + quelpa-use-package:
+;;
+;; >  (use-package snitch
+;; >    :quelpa (snitch :repo "mrmekon/snitch-el" :fetcher github))
+;;
+;; el-get:
+;;
+;; >  (el-get-bundle mrmekon/snitch-el)
+;;
+;; straight.el:
+;;
+;; >  (straight-use-package
+;; >    '(snitch :type git :host github :repo "mrmekon/snitch-el"))
+;;
+;; manual:
+;;
+;; >  (package-install-file "/path/to/snitch-x.y.z.tar")
+;;
+;;
 ;; === USAGE ===
 ;;
 ;; Enabling snitch is as simple as calling ‘(snitch-init)’.
@@ -126,10 +155,14 @@
 ;; emacs init without worrying about deferral or negative consequences
 ;; on startup time.
 ;;
+;; The minimum required initialization is simply:
+;;
+;; >  (require ’snitch)
+;; >  (snitch-init)
+;;
 ;; An example initialization using ‘use-package’ might look like so:
 ;;
 ;; >  (use-package snitch
-;; >    :ensure t
 ;; >    :config
 ;; >    (snitch-init))
 ;;
@@ -189,7 +222,6 @@
 ;; connections:
 ;;
 ;; >  (use-package snitch
-;; >    :ensure t
 ;; >    :config
 ;; >    (setq snitch-network-policy 'deny)
 ;; >    (setq snitch-process-policy 'deny)
@@ -205,7 +237,6 @@
 ;; to keep an audit trail.  This might look like so:
 ;;
 ;; >  (use-package snitch
-;; >    :ensure t
 ;; >    :config
 ;; >    (setq snitch-network-policy 'allow)
 ;; >    (setq snitch-process-policy 'allow)
@@ -448,6 +479,24 @@
 ;;  - add blacklist for timer functions
 ;;  - publish on MELPA?
 ;;  - profit!
+;;
+;;
+;; === VERSION HISTORY ===
+;;
+;; v0.2.0 (2020-12-09)
+;;
+;;   - first published version
+;;
+;; v0.1.0 (before 2020-12-09)
+;;
+;;   - Initial development and testing
+;;   - Network and process firewall functionality
+;;   - Audit logging
+;;   - Whitelist + blacklist filtering
+;;   - Backtrace processing
+;;   - Timer backtrace expansion
+;;   - User event and logging hooks
+;;   - ert test framework
 ;;
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
