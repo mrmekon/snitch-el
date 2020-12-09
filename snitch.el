@@ -4,7 +4,7 @@
 ;; Copyright (C) 2020 Trevor Bentley
 ;; Author: Trevor Bentley <snitch.el@x.mrmekon.com>
 ;; Created: 01 Dec 2020
-;; Version: 0.1.0
+;; Version: 0.2.0
 ;;
 ;; Keywords: processes, comm
 ;; URL: https://github.com/mrmekon/snitch-el
@@ -575,7 +575,7 @@ protocol family of the connection that snitch is considering.")
 ;;
 ;;
 
-(defconst snitch--version "0.1.0"
+(defconst snitch--version "0.2.0"
   "Snitch version as a string.")
 
 (defconst snitch-source-package-types
