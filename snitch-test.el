@@ -78,7 +78,8 @@
         snitch-on-allow-functions
         snitch-on-block-functions
         snitch-on-whitelist-functions
-        snitch-on-blacklist-functions))
+        snitch-on-blacklist-functions
+        snitch-log-functions))
 
 (defun snitch-test--restore-vars (vars)
   "restore saved vars after a test"
@@ -95,7 +96,8 @@
   (setq snitch-on-allow-functions (nth 10 vars))
   (setq snitch-on-block-functions (nth 11 vars))
   (setq snitch-on-whitelist-functions (nth 12 vars))
-  (setq snitch-on-blacklist-functions (nth 13 vars)))
+  (setq snitch-on-blacklist-functions (nth 13 vars))
+  (setq snitch-log-functions (nth 14 vars)))
 
 (defun snitch-test--clear-vars (net-policy proc-policy &optional init)
   "set global vars to known defaults for duration of a test"
@@ -107,12 +109,13 @@
   (setq snitch-process-whitelist '())
   (setq snitch-log-policy '())
   (setq snitch-log-verbose nil)
-  (setq snitch--log-buffer-max-lines 5000)
+  (setq snitch--log-buffer-max-lines 1000)
   (setq snitch-on-event-functions '())
   (setq snitch-on-allow-functions '())
   (setq snitch-on-block-functions '())
   (setq snitch-on-whitelist-functions '())
   (setq snitch-on-blacklist-functions '())
+  (setq snitch-log-functions '())
   (when init
     (snitch-init)))
 
@@ -186,6 +189,16 @@ matches EXPECTED-SUCCESS: t if allowed through, nil if blocked."
                (class (match-string-no-properties 2 line))
                (props (text-properties-at (point))))
           (list event class props))))))
+
+(defun snitch-test--get-log-line-raw (line)
+  "get a single line from the log buffer, unparsed"
+  (with-current-buffer (get-buffer-create snitch--log-buffer-name)
+    (let ((line-count (count-lines (point-min) (point-max))))
+      (when (> line-count line)
+        (goto-char (point-min))
+        (forward-line line)
+        (beginning-of-line)
+        (thing-at-point 'line)))))
 
 (defun snitch-test--log-lines ()
   "get the total number of lines in the snitch log buffer."
@@ -890,6 +903,65 @@ snitch to accept it."
     (should (eq 2 (length types)))
     (should (memq 'event types))
     (should (memq 'blacklist types))
+
+    ;; cleanup
+    (snitch-test--restore-vars orig-vars)
+    (snitch-test--cleanup)))
+
+(ert-deftest snitch-test-log-hooks ()
+  "Test that hooks are called when snitch emits a log message.
+Tests passing, blocking, and modifying log messages."
+  (setq hook1-var 0)
+  (setq hook2-var 0)
+  (let ((orig-vars (snitch-test--save-vars t))
+        (hook1 (lambda (msg) (setq hook1-var (1+ hook1-var)) t))
+        (hook2 (lambda (msg)
+                 (setq hook2-var (1+ hook2-var))
+                 (cond
+                  ((equal (get-text-property 0 'snitch-executable msg) "curl")
+                   "filtered out curl message\n")
+                  ((equal (get-text-property 0 'snitch-executable msg) "ls")
+                   nil)
+                  (t t)))))
+    (snitch-test--clear-vars 'allow 'allow t)
+    (setq snitch-log-policy '(allowed))
+
+    ;; All messages allowed
+    (setq snitch-log-functions (list hook1))
+    (snitch-test--clear-logs)
+
+    (snitch-test--process "ls" t)
+    (snitch-test--process "curl" t)
+    (snitch-test--process "whoami" t)
+    (should (eq hook1-var 3))
+    (should (eq hook2-var 0))
+    (should (eq (snitch-test--log-lines) 3))
+
+    ;; Some messages filtered
+    (setq snitch-log-functions (list hook1 hook2 hook1))
+    (snitch-test--clear-logs)
+
+    ;; hook1 run once (hook2 terminates)
+    (snitch-test--process "ls" t)
+    (should (eq hook1-var 4))
+    (should (eq hook2-var 1))
+    ;; ls blocked, nothing in log
+    (should (eq (snitch-test--log-lines) 0))
+
+    ;; hook1 run once (hook2 terminates)
+    (snitch-test--process "curl" t)
+    (should (eq hook1-var 5))
+    (should (eq hook2-var 2))
+    (should (eq (snitch-test--log-lines) 1))
+    (should (string-match "filtered out curl"
+                          (snitch-test--get-log-line-raw 0)))
+
+
+    ;; hook1 run twice (hook2 passes)
+    (snitch-test--process "whoami" t)
+    (should (eq hook1-var 7))
+    (should (eq hook2-var 3))
+    (should (eq (snitch-test--log-lines) 2))
 
     ;; cleanup
     (snitch-test--restore-vars orig-vars)

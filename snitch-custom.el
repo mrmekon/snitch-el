@@ -308,6 +308,29 @@ Returning nil interrupts the block, allowing the event to pass."
   :group 'snitch-hooks
   :type 'hook)
 
+;;;###autoload
+(defcustom snitch-log-functions '()
+  "Hooks called for snitch log entries.
+
+These hooks can be used to filter snitch's log output.  One
+possible use is removing potentially sensitive information from
+the log, such as authentication tokens passed to curl as
+arguments.
+
+Callback functions must take one argument: a log message string,
+propertized with details about the event that generated it.
+
+Return t to keep the log unchanged, nil to block the log entry,
+or a new propertized string to replace the log line.
+
+If several hooks are registered, the first hook to return nil or
+a modified string terminates processing.
+
+Hooks that modify the message are strongly encouraged to keep the
+timestamp and trailing newline intact."
+  :group 'snitch-hooks
+  :type 'hook)
+
 
 ;;
 ;;

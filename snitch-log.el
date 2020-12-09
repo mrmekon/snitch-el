@@ -133,6 +133,21 @@ log message. "
                 'snitch-port (oref event port)
                 'snitch-family (oref event family)))))
 
+(defun snitch--run-filter-log-hooks (logmsg)
+  "Run all hooks registered in ‘snitch-log-functions’ with the
+given log message.  Return the original log message if all hooks
+return t (or none are defined), or return nil or a modified new
+log string based on the first hook to return something other than
+t."
+  (if (null snitch-log-functions)
+      logmsg
+    (cl-loop for fn in snitch-log-functions with res = nil
+             do (setq res (funcall fn logmsg))
+             when (or (null res)
+                      (stringp res))
+             return res
+             finally return logmsg)))
+
 (defun snitch--log (evt-type event)
   "Log a snitch event to the dedicated snitch firewall log
 buffer.  EVENT is an event object, and EVT-TYPE is any policy
@@ -155,25 +170,35 @@ type from ‘snitch-log-policies’."
            (buf (get-buffer-create snitch--log-buffer-name))
            (pretty-obj (snitch--pretty-obj-string event))
            (timestamp (format-time-string "%Y-%m-%d %H:%M:%S"))
-           (logmsg (snitch--propertize
+           (rawmsg (snitch--propertize
                     (cond (snitch-log-verbose (format "[%s] (%s) --\n%s"
                                                       timestamp name pretty-obj))
                           (t (format "[%s] (%s) -- %s\n"
                                      timestamp name event)))
-                    event)))
+                    event))
+           (logmsg (snitch--run-filter-log-hooks rawmsg)))
       ;; start timer to keep log size limited
       (snitch--maybe-start-log-prune-timer)
       ;; write the formatted log entry to the log buffer
-      (with-current-buffer buf
-        (setq buffer-read-only nil)
-        (buffer-disable-undo)
-        (save-excursion
-          (goto-char (point-max))
-          (insert logmsg))
-        (setq buffer-read-only t))
+      (when logmsg
+        (with-current-buffer buf
+          (setq buffer-read-only nil)
+          (buffer-disable-undo)
+          (save-excursion
+            (goto-char (point-max))
+            (insert logmsg))
+          (setq buffer-read-only t)
+          ;; scroll log window to end if it is not active.  Don’t
+          ;; scroll when active to allow user to move around
+          ;; uninterrupted in the log.
+          (let ((log-win (get-buffer-window buf)))
+            (when log-win
+              (unless (eq (selected-window) log-win)
+                (with-selected-window log-win
+                  (goto-char (point-max))))))))
       ;; if the alert package is available and notifications are
       ;; enabled, also raise a notification
-      (when (and snitch--have-alert snitch-enable-notifications)
+      (when (and logmsg snitch--have-alert snitch-enable-notifications)
         (alert logmsg
                :title (format "Snitch Event: %s" name)
                :severity 'normal
