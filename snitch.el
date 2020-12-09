@@ -575,6 +575,9 @@ protocol family of the connection that snitch is considering.")
 ;;
 ;;
 
+(defconst snitch--version "0.1.0"
+  "Snitch version as a string.")
+
 (defconst snitch-source-package-types
   '(built-in site-lisp user)
   "Possible types for a snitch event's package source, as found
@@ -856,6 +859,11 @@ network connections."
   (interactive)
   (when (snitch-deinit)
     (snitch-init)))
+
+(defun snitch-version ()
+  "Return loaded snitch’s version number as a string."
+  snitch--version)
+
 
 (provide 'snitch)
 
