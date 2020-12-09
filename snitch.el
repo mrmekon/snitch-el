@@ -488,6 +488,7 @@
 ;;
 ;;
 
+;;;###autoload
 (defclass snitch-source ()
   ((timestamp :initarg :timestamp :type number :initform 0)
    (src-fn :initarg :src-fn :type (or null symbol) :initform nil)
@@ -498,6 +499,7 @@ about snitch's best guess for which emacs function/file/package
 is ultimately responsible for the event that snitch is
 considering.")
 
+;;;###autoload
 (defclass snitch-process-entry (snitch-source)
   ((proc-name :initarg :proc-name :type (or null string) :initform nil)
    (executable :initarg :executable :type (or null string) :initform nil)
@@ -507,6 +509,7 @@ subprocess. Supplies information about the name, executable
 binary, and arguments being provided to the subprocess that
 snitch is considering.")
 
+;;;###autoload
 (defclass snitch-network-entry (snitch-source)
   ((proc-name :initarg :proc-name :type (or null string) :initform nil)
    (host :initarg :host :type (or null string symbol) :initform nil)

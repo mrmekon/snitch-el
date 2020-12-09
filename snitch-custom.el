@@ -42,19 +42,21 @@
 ;;
 ;;
 
+;;;###autoload
 (defgroup snitch nil
   "Customization options for the snitch firewall"
   :group 'communication
   :prefix "snitch-")
 
 
+;;;###autoload
 (defgroup snitch-log nil
   "Logging options for snitch firewall"
   :group 'snitch
   :prefix "snitch-")
 
 ;;;###autoload
-(defcustom snitch-log-policy '(all blocked)
+(defcustom snitch-log-policy '(all)
   "Specifies types of actions that snitch should log.  Provided
 as a list of symbols defined in snitch-log-policies"
   :type '(repeat (choice (const all)
@@ -64,13 +66,15 @@ as a list of symbols defined in snitch-log-policies"
                          (const blacklisted)))
   :group 'snitch-log)
 
+;;;###autoload
 (defcustom snitch-log-verbose nil
   "Whether the log output should be extra verbose (pretty-printed
 multi-line event logs)."
   :type 'boolean
   :group 'snitch-log)
 
-(defcustom snitch--log-buffer-max-lines 5000
+;;;###autoload
+(defcustom snitch--log-buffer-max-lines 1000
   "Maximum number of lines to keep in the snitch event log
 buffer.  When it grows larger than this, the least recent lines
 are periodically truncated by a timer.
@@ -83,6 +87,7 @@ Set to 0 for unlimited."
   :type 'number
   :group 'snitch-log)
 
+;;;###autoload
 (defcustom snitch-enable-notifications nil
   "Whether snitch should raise notifications for each log
 message, in addition to printing them in the log buffer.
@@ -97,6 +102,7 @@ the event object in ‘data’."
   :group 'snitch-log)
 
 
+;;;###autoload
 (defgroup snitch-policy nil
   "Default firewall policy options for snitch"
   :group 'snitch
@@ -123,6 +129,7 @@ snitch-network-whitelist."
   :group 'snitch-policy)
 
 
+;;;###autoload
 (defgroup snitch-rules nil
   "Firewall rules for snitch (blacklists/whitelists)"
   :group 'snitch
@@ -204,6 +211,7 @@ rules earlier in the list."
 ;;
 ;;
 
+;;;###autoload
 (defgroup snitch-hooks nil
   "Hooks (callbacks) for snitch firewall events."
   :group 'snitch
@@ -307,16 +315,19 @@ Returning nil interrupts the block, allowing the event to pass."
 ;;
 ;;
 
+;;;###autoload
 (defgroup snitch-faces nil
   "Faces for snitch firewall windows"
   :group 'snitch
   :prefix "snitch-")
 
+;;;###autoload
 (defface snitch--log-filter-face
   '((t . (:inherit default)))
   "Face for log filter wizard"
   :group 'snitch-faces)
 
+;;;###autoload
 (defface snitch--log-filter-active-face
   '((t . (:inherit snitch--log-filter-face :inverse-video t :weight bold)))
   "Face for log filter wizard, selected entries"
@@ -329,11 +340,13 @@ Returning nil interrupts the block, allowing the event to pass."
 ;;
 ;;
 
+;;;###autoload
 (defgroup snitch-timer nil
   "Options related to when and how snitch monitors timers."
   :group 'snitch-timer
   :prefix "snitch-")
 
+;;;###autoload
 (defcustom snitch-trace-timers t
   "Whether to decorate timer callbacks with backtraces, so snitch
 can identify the package source of an event that was scheduled on
@@ -354,6 +367,7 @@ snitch-monitor-unique-timer-fns’ for more."
   :group 'snitch-timer)
 
 ;; TODO: hook this up, and consider a whitelist too
+;;;;;###autoload
 ;;(defcustom snitch-timer-blacklist
 ;;  '(
 ;;    #'isearch-lazy-highlight-start
@@ -379,10 +393,14 @@ snitch-monitor-unique-timer-fns’ for more."
 ;;  :type '(repeat (choice (function) (string)))
 ;;  :group 'snitch-timer)
 
+;;;###autoload
 (defcustom snitch-print-timer-warnings t
   "Whether snitch should output warnings when the functions
 tracking timer backtraces encounter an unusual situation, such as
-a missing timer or a timer that never fires."
+a missing timer or a timer that never fires.
+
+Note that misbehaved packages that cancel timers that aren't
+scheduled will trigger false-positive warnings."
   :type 'boolean
   :group 'snitch-timer)
 
