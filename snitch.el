@@ -157,7 +157,7 @@
 ;;
 ;; The minimum required initialization is simply:
 ;;
-;; >  (require ’snitch)
+;; >  (require 'snitch)
 ;; >  (snitch-init)
 ;;
 ;; An example initialization using ‘use-package’ might look like so:
