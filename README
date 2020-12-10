@@ -133,7 +133,8 @@ manual:
 
 === USAGE ===
 
-Enabling snitch is as simple as calling ‘(snitch-init)’.
+Enabling snitch is as simple as calling ‘snitch-mode’
+interactively, or ‘(snitch-mode +1)’ from your init file.
 Initialization does very little, so this is safe to call in your
 Emacs init without worrying about deferral or negative consequences
 on startup time.
@@ -141,13 +142,13 @@ on startup time.
 The minimum required initialization is simply:
 
 >  (require 'snitch)
->  (snitch-init)
+>  (snitch-mode +1)
 
 An example initialization using ‘use-package’ might look like so:
 
 >  (use-package snitch
 >    :config
->    (snitch-init))
+>    (snitch-mode +1))
 
 snitch then runs in the background, performing its duties according
 to your configuration, and logging in its dedicated buffer.
@@ -161,7 +162,9 @@ a popup window that allows you to configure a new filter based on
 one or more fields of the selected log line, and add it to either
 your blacklist or whitelist.
 
-To disable snitch, call ‘(snitch-deinit)’.
+To disable snitch, call ‘snitch-mode’ interactively, or
+‘(snitch-mode -1)’ programmatically.  You can restart snitch with
+‘snitch-restart’.
 
 
 === CONFIGURATION ===
@@ -211,7 +214,7 @@ connections:
 >    (setq snitch-log-policy '(blocked whitelisted allowed))
 >    (add-to-list 'snitch-network-whitelist
 >                  (cons #'snitch-filter-src-pkg '(elfeed)))
->    (snitch-init))
+>    (snitch-mode +1))
 
 
 ==== COMMON CONFIG: ALLOW + AUDIT ====
@@ -225,7 +228,7 @@ to keep an audit trail.  This might look like so:
 >    (setq snitch-process-policy 'allow)
 >    (setq snitch-log-policy '(allowed blocked whitelisted blacklisted))
 >    (setq snitch-log-verbose t)
->    (snitch-init))
+>    (snitch-mode +1))
 
 
 ==== FILTER RULES ====
@@ -306,6 +309,17 @@ lists, returning nil reverses the action implied by the list name:
 returning nil in a ‘snitch-on-allow-functions’ hook causes the
 event to be blocked, returning nil in a ‘snitch-on-block-functions’
 hook causes it to be allowed.
+
+
+snitch also supports filtering log entries with hooks via
+‘snitch-log-functions’.  These hooks can pass, block, or modify
+entries before they are printed in the snitch log.  See ‘M-x
+describe-variable <RET> snitch-log-functions’ for details.
+
+snitch also calls hooks when it starts (‘snitch-init-hook’), shuts
+down (‘snitch-deinit-hook’), or opens or closes the log filter
+window (‘snitch-log-filter-window-open-hook’,
+‘snitch-log-filter-window-close-hook’).
 
 
 === PERFORMANCE ===
@@ -465,6 +479,14 @@ to the socket.
 
 
 === VERSION HISTORY ===
+
+v0.3.0 (development)
+
+  - make snitch a global minor mode
+    - introduce (snitch-mode)
+    - make (snitch-init) private (snitch--init)
+    - make (snitch-deinit) private (snitch--deinit)
+  - add init and deinit hooks
 
 v0.2.0 (2020-12-09)
 
