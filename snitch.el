@@ -4,7 +4,7 @@
 ;; Copyright (C) 2020 Trevor Bentley
 ;; Author: Trevor Bentley <snitch.el@x.mrmekon.com>
 ;; Created: 01 Dec 2020
-;; Version: 0.2.0
+;; Version: 0.3.0
 ;; Package-Requires: ((emacs "27.1"))
 ;;
 ;; Keywords: processes, comm
@@ -498,6 +498,14 @@
 ;;
 ;; === VERSION HISTORY ===
 ;;
+;; v0.3.0 (development)
+;;
+;;   - make snitch a global minor mode
+;;     - introduce (snitch-mode)
+;;     - make (snitch-init) private (snitch--init)
+;;     - make (snitch-deinit) private (snitch--deinit)
+;;   - add init and deinit hooks
+;;
 ;; v0.2.0 (2020-12-09)
 ;;
 ;;   - first published version
@@ -590,7 +598,7 @@ protocol family of the connection that snitch is considering.")
 ;;
 ;;
 
-(defconst snitch--version "0.2.0"
+(defconst snitch--version "0.3.0"
   "Snitch version as a string.")
 
 (defconst snitch-source-package-types
