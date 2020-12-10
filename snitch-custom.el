@@ -48,6 +48,13 @@
   :group 'communication
   :prefix "snitch-")
 
+;;;###autoload
+(defcustom snitch-lighter nil
+  "Text to display in mode-line when snitch is enabled, or nil to
+hide."
+  :type 'string
+  :group 'snitch)
+
 
 ;;;###autoload
 (defgroup snitch-log nil
@@ -320,6 +327,20 @@ Returning nil interrupts the block, allowing the event to pass."
   :type 'hook)
 
 ;;;###autoload
+(defcustom snitch-init-hook '()
+  "Called immediately after snitch initializes and starts
+monitoring."
+  :group 'snitch-hooks
+  :type 'hook)
+
+;;;###autoload
+(defcustom snitch-deinit-hook '()
+  "Called immediately after snitch deinitializes and stops
+monitoring."
+  :group 'snitch-hooks
+  :type 'hook)
+
+;;;###autoload
 (defcustom snitch-log-functions '()
   "Hooks called for snitch log entries.
 
@@ -386,8 +407,9 @@ timestamp and trailing newline intact."
 can identify the package source of an event that was scheduled on
 a timer.
 
-This must be configured before calling ‘snitch-init’.  If it is
-changed while snitch is running, call ‘snitch-restart’.
+This must be configured before initializing snitch with
+‘snitch-mode’.  If it is changed while snitch is running, call
+‘snitch-restart’.
 
 Enabling this requires snitch to intercept all emacs timers.
 This can cause significant delays if there are very many timers,

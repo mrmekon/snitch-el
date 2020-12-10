@@ -151,7 +151,8 @@
 ;;
 ;; === USAGE ===
 ;;
-;; Enabling snitch is as simple as calling ‘(snitch-init)’.
+;; Enabling snitch is as simple as calling ‘snitch-mode’
+;; interactively, or ‘(snitch-mode +1)’ from your init file.
 ;; Initialization does very little, so this is safe to call in your
 ;; Emacs init without worrying about deferral or negative consequences
 ;; on startup time.
@@ -159,13 +160,13 @@
 ;; The minimum required initialization is simply:
 ;;
 ;; >  (require 'snitch)
-;; >  (snitch-init)
+;; >  (snitch-mode +1)
 ;;
 ;; An example initialization using ‘use-package’ might look like so:
 ;;
 ;; >  (use-package snitch
 ;; >    :config
-;; >    (snitch-init))
+;; >    (snitch-mode +1))
 ;;
 ;; snitch then runs in the background, performing its duties according
 ;; to your configuration, and logging in its dedicated buffer.
@@ -179,7 +180,9 @@
 ;; one or more fields of the selected log line, and add it to either
 ;; your blacklist or whitelist.
 ;;
-;; To disable snitch, call ‘(snitch-deinit)’.
+;; To disable snitch, call ‘snitch-mode’ interactively, or
+;; ‘(snitch-mode -1)’ programmatically.  You can restart snitch with
+;; ‘snitch-restart’.
 ;;
 ;;
 ;; === CONFIGURATION ===
@@ -229,7 +232,7 @@
 ;; >    (setq snitch-log-policy '(blocked whitelisted allowed))
 ;; >    (add-to-list 'snitch-network-whitelist
 ;; >                  (cons #'snitch-filter-src-pkg '(elfeed)))
-;; >    (snitch-init))
+;; >    (snitch-mode +1))
 ;;
 ;;
 ;; ==== COMMON CONFIG: ALLOW + AUDIT ====
@@ -243,7 +246,7 @@
 ;; >    (setq snitch-process-policy 'allow)
 ;; >    (setq snitch-log-policy '(allowed blocked whitelisted blacklisted))
 ;; >    (setq snitch-log-verbose t)
-;; >    (snitch-init))
+;; >    (snitch-mode +1))
 ;;
 ;;
 ;; ==== FILTER RULES ====
@@ -324,6 +327,17 @@
 ;; returning nil in a ‘snitch-on-allow-functions’ hook causes the
 ;; event to be blocked, returning nil in a ‘snitch-on-block-functions’
 ;; hook causes it to be allowed.
+;;
+;;
+;; snitch also supports filtering log entries with hooks via
+;; ‘snitch-log-functions’.  These hooks can pass, block, or modify
+;; entries before they are printed in the snitch log.  See ‘M-x
+;; describe-variable <RET> snitch-log-functions’ for details.
+;;
+;; snitch also calls hooks when it starts (‘snitch-init-hook’), shuts
+;; down (‘snitch-deinit-hook’), or opens or closes the log filter
+;; window (‘snitch-log-filter-window-open-hook’,
+;; ‘snitch-log-filter-window-close-hook’).
 ;;
 ;;
 ;; === PERFORMANCE ===
@@ -830,7 +844,7 @@ network connections."
   ;;   open-network-stream
   )
 
-(defun snitch-unload-function ()
+(defun snitch--unregister-wrapper-fns ()
   "Unload the snitch decision engine wrapping functions."
   (remove-function (symbol-function 'make-network-process)
                    #'snitch--wrap-make-network-process)
@@ -838,31 +852,64 @@ network connections."
                    #'snitch--wrap-make-process))
 
 
-;;;###autoload
-(defun snitch-init ()
+(defun snitch--init ()
   "Initialize snitch.el firewall, enabling globally."
   (interactive)
+  (when snitch-mode
+      (snitch--deinit))
   (when snitch-trace-timers (snitch--activate-timer-trace))
-  (when (snitch--register-wrapper-fns) t))
+  (when (snitch--register-wrapper-fns) t)
+  (run-hooks 'snitch-init-hook))
 
-(defun snitch-deinit ()
-  "Unload snitch.el firewall, disabling globally."
+(defun snitch--deinit (&optional rerequire)
+  "Unload snitch.el firewall, disabling globally.
+
+When the optional argument REREQUIRE is t, the snitch feature is
+completely unloaded and re-loaded into Emacs.  Autoloaded symbols
+may be lost in this process."
   (interactive)
   (snitch--deactivate-timer-trace)
   (snitch--stop-log-prune-timer)
-  (unload-feature 'snitch t)
-  (when (require 'snitch) t))
+  (snitch--unregister-wrapper-fns)
+  (run-hooks 'snitch-deinit-hook)
+  (when rerequire
+    (unload-feature 'snitch t)
+    (when (require 'snitch) t)))
 
+;;;###autoload
 (defun snitch-restart ()
-  "Unload snitch.el and re-launch snitch firewall."
+  "Restart the snitch firewall, unloading and reloading all
+hooks."
   (interactive)
-  (when (snitch-deinit)
-    (snitch-init)))
+  (when (snitch--deinit)
+    (snitch--init)))
 
+;;;###autoload
 (defun snitch-version ()
   "Return loaded snitch’s version number as a string."
   snitch--version)
 
+;;;###autoload
+(define-minor-mode snitch-mode
+  "Toggle snitch firewall on and off.
+
+The snitch firewall is enabled as a global minor mode, and
+monitors network connections and subprocesses in the background.
+
+For more information, use ‘M-x describe-package <RET> snitch’.
+
+To customize, use ‘M-x customize-group <RET> snitch’.
+
+No mode-line annotation is displayed by default, but this can be
+changed by customizing ‘snitch-lighter’.  To add custom code
+after start or shutdown, add hooks to ‘snitch-init-hook’ or
+‘snitch-deinit-hook’."
+  :global t
+  :lighter snitch-lighter
+  :group 'snitch
+  (if snitch-mode
+      (snitch--init)
+    (snitch--deinit)))
 
 (provide 'snitch)
 

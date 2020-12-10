@@ -117,13 +117,13 @@
   (setq snitch-on-blacklist-functions '())
   (setq snitch-log-functions '())
   (when init
-    (snitch-init)))
+    (snitch-mode +1)))
 
 (defun snitch-test--cleanup ()
   "kill any spawned processes and restart snitch"
   (cl-loop for proc in (process-list)
            do (delete-process proc))
-  (snitch-deinit))
+  (snitch-mode -1))
 
 (defun snitch-test--server (port)
   "launch a TCP server to receive connections"
@@ -1409,21 +1409,16 @@ is shown or hidden."
 
 (defun snitch--test-wrap-process ()
   (setq snitch-log-verbose nil)
-  (make-process :name "poop" :command '("ls" "-l"))
-  )
+  (make-process :name "poop" :command '("ls" "-l")))
 
 (defun snitch--test-wrap-network-process ()
-  (snitch-init)
   (make-network-process :name "netpoop" :host "blommorna.com" :service 443 :family 'ipv4)
   (url-retrieve "http://google.com" #'identity)
-  (setq snitch-log-buffer-max-lines 5)
-  )
+  (setq snitch-log-buffer-max-lines 5))
 
 
 (defun snitch--test-log-filter-buffer ()
-  (snitch--run-log-filter-wizard (snitch-network-entry :src-path "/hello"))
-  )
-;;(snitch--test-log-filter-buffer)
+  (snitch--run-log-filter-wizard (snitch-network-entry :src-path "/hello")))
 
 (defun snitch--test-package-from-path ()
   (snitch--package-from-path "/home/trevor/.emacs.d/elpa/elfeed-20200910.239/elfeed.el")
@@ -1433,8 +1428,6 @@ is shown or hidden."
 
 (defun snitch--test-backtrace()
   (snitch--backtrace))
-
-;; (snitch--test-backtrace)
 
 (defun snitch--test-responsible-caller ()
   (message "\n\n\nbacktrace:\n%s" (snitch--backtrace))
