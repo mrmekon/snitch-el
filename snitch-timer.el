@@ -13,7 +13,7 @@
 ;;
 ;;; Commentary:
 ;;
-;; This file hooks emacs timers to save backtrace information.  It is
+;; This file hooks Emacs timers to save backtrace information.  It is
 ;; used by the snitch-backtrace functions to reproduce full backtraces
 ;; for functions initiated by timers.  This is required to provide a
 ;; more accurate guess as to which function/package originated a call

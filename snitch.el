@@ -1,10 +1,11 @@
-;;; snitch.el --- an emacs firewall        -*- lexical-binding: t; -*-
+;;; snitch.el --- An emacs firewall        -*- lexical-binding: t; -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; Copyright (C) 2020 Trevor Bentley
 ;; Author: Trevor Bentley <snitch.el@x.mrmekon.com>
 ;; Created: 01 Dec 2020
 ;; Version: 0.2.0
+;; Package-Requires: ((emacs "27.1"))
 ;;
 ;; Keywords: processes, comm
 ;; URL: https://github.com/mrmekon/snitch-el
@@ -15,7 +16,7 @@
 ;;
 ;;; Commentary:
 ;;
-;; snitch.el (pronounced like schnitzel) is a firewall for emacs.
+;; snitch.el (pronounced like schnitzel) is a firewall for Emacs.
 ;;
 ;; snitch intercepts calls to create network connections or launch
 ;; subprocesses.  Through user-configured default policies, filter
@@ -28,7 +29,7 @@
 ;; and logging policies.
 ;;
 ;; The main purpose of snitch is network monitoring.  Subprocesses are
-;; included because it is extremely common for emacs packages to
+;; included because it is extremely common for Emacs packages to
 ;; "shell out" to an external program for network access, commonly to
 ;; ‘curl’.  As a side effect, snitch can also effectively audit and
 ;; prevent undesired access to other programs.
@@ -47,22 +48,22 @@
 ;; times, most users manage large collections of third-party packages
 ;; through intelligent package managers that automatically pull in any
 ;; number of dependencies, updated periodically.  Any and all of these
-;; could be a bit naughty, and the sheer quantity of lisp code in a
-;; modern emacs install makes it un-auditable.
+;; could be a bit naughty, and the sheer quantity of Lisp code in a
+;; modern Emacs install makes it un-auditable.
 ;;
-;; An emacs firewall, thus, makes sense.  Does *snitch* make sense?
+;; An Emacs firewall, thus, makes sense.  Does *snitch* make sense?
 ;; Not really... see the SECURITY section below.  But we currently
 ;; have nothing, and snitch is better than nothing.
 ;;
-;; Also, to answer the question: "I wonder if I can make an emacs
+;; Also, to answer the question: "I wonder if I can make an Emacs
 ;; firewall?"  Yes! ...well, sort of.
 ;;
 ;;
 ;; === MECHANISM ===
 ;;
 ;; The underlying ’firewall’ mechanism is built on function advice
-;; surrounding emacs’s lowest-level core functions for spawning
-;; connections or subprocesses.  When an emacs package or script makes
+;; surrounding Emacs’s lowest-level core functions for spawning
+;; connections or subprocesses.  When an Emacs package or script makes
 ;; such a request, snitch receives it first, and either passes it
 ;; through or rejects it based on the current rules.  Once a
 ;; connection or process is accepted, snitch is no longer involved for
@@ -152,7 +153,7 @@
 ;;
 ;; Enabling snitch is as simple as calling ‘(snitch-init)’.
 ;; Initialization does very little, so this is safe to call in your
-;; emacs init without worrying about deferral or negative consequences
+;; Emacs init without worrying about deferral or negative consequences
 ;; on startup time.
 ;;
 ;; The minimum required initialization is simply:
@@ -184,7 +185,7 @@
 ;; === CONFIGURATION ===
 ;;
 ;; Customize snitch with ‘M-x customize-group <RET> snitch’, or
-;; manually in your emacs initialization file.
+;; manually in your Emacs initialization file.
 ;;
 ;; Most users will have five variables that need to be configured
 ;; before use:
@@ -227,7 +228,7 @@
 ;; >    (setq snitch-process-policy 'deny)
 ;; >    (setq snitch-log-policy '(blocked whitelisted allowed))
 ;; >    (add-to-list 'snitch-network-whitelist
-;; >                  (cons #'snitch-filter/src-pkg '(elfeed)))
+;; >                  (cons #'snitch-filter-src-pkg '(elfeed)))
 ;; >    (snitch-init))
 ;;
 ;;
@@ -334,7 +335,7 @@
 ;; ephemeral and only contain a small amount of metadata.  The largest
 ;; use of memory is the audit log, which does keep copies of all
 ;; events in the log.  This can be controlled via
-;; ‘snitch--log-buffer-max-lines’.
+;; ‘snitch-log-buffer-max-lines’.
 ;;
 ;; Firewall rules are traversed linearly, and short-circuit (if an
 ;; early rule terminates processing, the subsequent rules will not be
@@ -346,14 +347,14 @@
 ;; === TIMER TRACING ===
 ;;
 ;; Since snitch’s usefulness is highly dependent on the ability to
-;; trace back to the original source that triggered an event, emacs
+;; trace back to the original source that triggered an event, Emacs
 ;; timers pose a bit of a challenge.  Timers are used to trigger
 ;; network requests asynchronously, but have the side effect of losing
 ;; the stack trace back to the function or package that initiated it.
 ;;
 ;; To deal with this, snitch optionally supports timer tracing.  When
 ;; tracing is enabled, by customizing ‘snitch-trace-timers’ to t,
-;; snitch hooks into emacs’s timer functions, and records backtraces
+;; snitch hooks into Emacs’s timer functions, and records backtraces
 ;; whenever a timer is registered.  If a timer later generates a
 ;; snitch-relevant event, snitch concatenates the regular backtrace
 ;; with the cached timer backtrace to get a full call stack for the
@@ -374,7 +375,7 @@
 ;; Notice how the source is the function ‘timer-event-handler’ in
 ;; ‘timer.el’, part of the special ‘site-lisp’ package?  *All*
 ;; timer-originated network calls appear to originate from that
-;; function, since it is the lowest level emacs timer dispatch
+;; function, since it is the lowest level Emacs timer dispatch
 ;; function.  It is impossible to filter on the true source.
 ;;
 ;; Now with ‘snitch-trace-timers’ set to t (tracing enabled):
@@ -390,7 +391,7 @@
 ;; find the true source, ‘elfeed-insert-html’ in the ‘elfeed’ package!
 ;;
 ;; Timer tracing comes with a cost: snitch has to generate metadata
-;; for every single timer event.  If your emacs usage involves a very
+;; for every single timer event.  If your Emacs usage involves a very
 ;; large number of timers, or very high-frequency timers, snitch’s
 ;; tracing could lead to delays and inflated memory usage.  Consider
 ;; carefully whether this is a feature you need, and leave it disabled
@@ -418,12 +419,12 @@
 ;; "tamper-proof" and provide "complete mediation."  snitch does
 ;; neither.
 ;;
-;; Tamper-proof: none at all.  Any other emacs package can simply
+;; Tamper-proof: none at all.  Any other Emacs package can simply
 ;; disable snitch, or modify it to pass malicious traffic undetected.
 ;;
 ;; Complete mediation: no attempt has been made to verify that *all*
 ;; network and subprocess accesses must go through the functions that
-;; snitch hooks.  Given the complexity of emacs, it is extremely
+;; snitch hooks.  Given the complexity of Emacs, it is extremely
 ;; unlikely that they do.
 ;;
 ;; However, your Principal Security Engineer friends also like to
@@ -439,14 +440,14 @@
 ;;
 ;; snitch is useful for auditing and blocking unwanted features in an
 ;; otherwise well-behaving ecosystem.  It is handy for getting a
-;; record of exactly what your emacs is doing, and for fine-tuning
-;; accesses beyond emacs’s boundaries a little bit better.  It will
+;; record of exactly what your Emacs is doing, and for fine-tuning
+;; accesses beyond Emacs’s boundaries a little bit better.  It will
 ;; not, however, save you from the bad guys.
 ;;
 ;;
 ;; === KNOWN LIMITATIONS ===
 ;;
-;; When snitch blocks events, some emacs functions that seldom throw
+;; When snitch blocks events, some Emacs functions that seldom throw
 ;; errors in normal use will throw errors because of snitch.  It is
 ;; very likely that blocked connections will cause errors to bubble up
 ;; in strange and unexpected ways, as many package authors have not
@@ -521,7 +522,7 @@
 ;;; Code:
 
 (require 'eieio) ; class objects
-(require 'cl-macs) ; cl loops
+(require 'cl-lib) ; cl loops
 (require 'package) ; backtrace package sources
 (require 'backtrace)
 
@@ -643,8 +644,7 @@ were blocked by a blacklist rule")
     network-blocked
     network-allowed
     network-whitelisted
-    network-blacklisted
-    )
+    network-blacklisted)
   "All of the logging policies for snitch.  Provide a list of
 these symbols to ‘snitch-log-policy’ to enable logging of events of
 the corresponding type.
@@ -794,8 +794,7 @@ permit it."
                  :src-pkg (nth 2 caller)
                  :proc-name (plist-get args :name)
                  :executable (car (plist-get args :command))
-                 :args (cdr (plist-get args :command)))
-                ))
+                 :args (cdr (plist-get args :command)))))
     (snitch--wrap-internal event "process" orig-fun args)))
 
 (defun snitch--wrap-make-network-process (orig-fun &rest args)

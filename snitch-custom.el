@@ -74,7 +74,7 @@ multi-line event logs)."
   :group 'snitch-log)
 
 ;;;###autoload
-(defcustom snitch--log-buffer-max-lines 1000
+(defcustom snitch-log-buffer-max-lines 1000
   "Maximum number of lines to keep in the snitch event log
 buffer.  When it grows larger than this, the least recent lines
 are periodically truncated by a timer.
@@ -138,7 +138,11 @@ snitch-network-whitelist."
 ;;;###autoload
 (defcustom snitch-network-blacklist
   '()
-  ""
+  "A list of rules defining which network connections are
+forbidden when snitch.el is configured to allow connections by
+default.
+
+See documentation of ‘snitch-process-whitelist’ for details."
   :group 'snitch-rules
   :type '(alist :key-type function
                 :value-type (repeat sexp)))
@@ -146,7 +150,11 @@ snitch-network-whitelist."
 ;;;###autoload
 (defcustom snitch-network-whitelist
   '()
-  ""
+  "A list of rules defining which network connections are
+permitted when snitch.el is configured to deny connections by
+default.
+
+See documentation of ‘snitch-process-whitelist’ for details."
   :group 'snitch-rules
   :type '(alist :key-type function
                 :value-type (repeat sexp)))
@@ -166,7 +174,10 @@ snitch-network-whitelist."
     ;; Example: block processes from an unknown user package
     ;;(snitch-filter/src-pkg . (user))
     )
-  ""
+  "A list of rules defining which subprocess calls are forbidden
+when snitch.el is configured to allow subprocesses by default.
+
+See documentation of ‘snitch-process-whitelist’ for details."
   :group 'snitch-rules
   :type '(alist :key-type function
                 :value-type (repeat sexp)))
@@ -227,10 +238,10 @@ of the other hooks with snitch's final decision.
 
 Callback functions must take two arguments:
 
-  1) a snitch-actions symbol describing the event type ('event)
+  1) a ‘snitch-actions’ symbol describing the event type (‘event’)
 
-  2) an event object, either a snitch-process-entry or
-  snitch-network-entry.
+  2) an event object, either a ‘snitch-process-entry’ or
+  ‘snitch-network-entry’.
 
 Returning nil blocks the event, terminating processing."
   :group 'snitch-hooks
@@ -242,10 +253,10 @@ Returning nil blocks the event, terminating processing."
 
 Callback functions must take two arguments:
 
-  1) a snitch-actions symbol describing the event type ('block)
+  1) a ‘snitch-actions’ symbol describing the event type (‘block’)
 
-  2) an event object, either a snitch-process-entry or
-  snitch-network-entry.
+  2) an event object, either a ‘snitch-process-entry’ or
+  ‘snitch-network-entry’.
 
 Returning nil interrupts the block, allowing the event to pass."
   :group 'snitch-hooks
@@ -257,10 +268,10 @@ Returning nil interrupts the block, allowing the event to pass."
 
 Callback functions must take two arguments:
 
-  1) a snitch-actions symbol describing the event type ('allow)
+  1) a ‘snitch-actions’ symbol describing the event type (‘allow’)
 
-  2) an event object, either a snitch-process-entry or
-  snitch-network-entry.
+  2) an event object, either a ‘snitch-process-entry’ or
+  ‘snitch-network-entry’.
 
 Returning nil blocks the event, terminating processing."
   :group 'snitch-hooks
@@ -272,10 +283,10 @@ Returning nil blocks the event, terminating processing."
 
 Callback functions must take two arguments:
 
-  1) a snitch-actions symbol describing the event type ('whitelist)
+  1) a ‘snitch-actions’ symbol describing the event type (‘whitelist’)
 
-  2) an event object, either a snitch-process-entry or
-  snitch-network-entry.
+  2) an event object, either a ‘snitch-process-entry’ or
+  ‘snitch-network-entry’.
 
 Returning nil blocks the event, terminating processing."
   :group 'snitch-hooks
@@ -287,10 +298,10 @@ Returning nil blocks the event, terminating processing."
 
 Callback functions must take two arguments:
 
-  1) a snitch-actions symbol describing the event type ('blacklist)
+  1) a ‘snitch-actions’ symbol describing the event type (‘blacklist’)
 
-  2) an event object, either a snitch-process-entry or
-  snitch-network-entry.
+  2) an event object, either a ‘snitch-process-entry’ or
+  ‘snitch-network-entry’.
 
 Returning nil interrupts the block, allowing the event to pass."
   :group 'snitch-hooks

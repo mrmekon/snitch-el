@@ -36,7 +36,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Code:
-(require 'cl-macs) ; cl loops
+(require 'cl-lib) ; cl loops
 (require 'package) ; backtrace package sources
 (require 'backtrace)
 
@@ -52,10 +52,10 @@
 ;; snitch--package-dirs-cache might grow unbounded.
 
 (defvar snitch--site-lisp-dir-cache nil
-  "Cache a list of the emacs site-lisp directories.")
+  "Cache a list of the Emacs site-lisp directories.")
 
 (defvar snitch--site-lisp-root-cache nil
-  "Cache a list of the emacs site-lisp root directories.")
+  "Cache a list of the Emacs site-lisp root directories.")
 
 (defvar snitch--function-to-file-cache nil
   "Hash table cache of function names to the file the functions
@@ -124,7 +124,9 @@ system-wide/non-user base directories containing elisp files."
     snitch--site-lisp-root-cache))
 
 (defun snitch--dir-in-site-lisp (dir)
-  "Check if a directory is a subdirectory of one of the system-wide elisp directories found by `snitch--site-lisp-roots'."
+  "Check if directory DIR is a subdirectory of one of the
+system-wide elisp directories found by
+`snitch--site-lisp-roots'."
   (not (null (cl-loop for site-dir in (snitch--site-lisp-roots)
                       if (string-prefix-p site-dir dir)
                       collect site-dir))))
@@ -149,7 +151,7 @@ in that directory."
   (gethash (file-name-as-directory dir) snitch--package-dirs-cache))
 
 (defun snitch--package-from-path (path)
-  "Try to guess a package name for a full path to a file.
+  "Try to guess a package name for PATH, a full path to a file.
 Returns a symbol, which is either an installed package name, or
 one of the following special values:
 
@@ -274,8 +276,7 @@ started the chain.
 
 On the other hand, for packages, we really want to focus on the
 very last function that was responsible for triggering the rest
-of the emacs internal activity.
-"
+of the emacs internal activity."
   (cond
    ;; nil only greater than nil
    ((null a) (member b (list nil)))

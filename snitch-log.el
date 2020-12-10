@@ -109,7 +109,7 @@ can be used to deserialize back into an object with eval."
 (defun snitch--propertize (logmsg event)
   "Add text properties to LOGMSG with elements from EVENT.  This
 allows the log filter commands to re-assemble an event from its
-log message. "
+log message."
   (cond
    ;; process events
    ((snitch-process-entry-p event)
@@ -217,6 +217,8 @@ type from ‘snitch-log-policies’."
                :data event)))))
 
 (defun snitch--prune-log-buffer ()
+  "Prune the size of log buffer to at most
+‘snitch-log-buffer-max-lines’ lines long."
   ;; ensure timer is stopped.  it will be started again by the next
   ;; log event.  it’s wasteful to have a timer running when we know
   ;; the buffer isn’t growing.
@@ -224,13 +226,13 @@ type from ‘snitch-log-policies’."
   (let ((buf (get-buffer-create snitch--log-buffer-name)))
     (with-current-buffer buf
       (let ((line-count (count-lines (point-min) (point-max))))
-        (when (and (> snitch--log-buffer-max-lines 0)
-                   (> line-count snitch--log-buffer-max-lines))
+        (when (and (> snitch-log-buffer-max-lines 0)
+                   (> line-count snitch-log-buffer-max-lines))
           (setq buffer-read-only nil)
           (buffer-disable-undo)
           (save-excursion
             (goto-char (point-min))
-            (forward-line (+ (- line-count snitch--log-buffer-max-lines) 1))
+            (forward-line (+ (- line-count snitch-log-buffer-max-lines) 1))
             (delete-region (point-min) (point))
             (goto-char (point-min))
             (insert "[log trimmed]\n")
@@ -306,8 +308,7 @@ persistently as a customized variable."
                                         :src-pkg pkg
                                         :proc-name name
                                         :executable exec
-                                        :args args))))
-  )))
+                                        :args args)))))))
 
 (defun snitch--run-log-filter-wizard (event)
   "Runs the snitch log filter 'wizard', an interactive popup
@@ -371,7 +372,7 @@ the filter to the customization variable if appropriate."
            ((string-equal key "w") (setq black-white "whitelist")))))
       ;; append the new entry to the correct defcustom list, and
       ;; save as default customization.
-      (let* ((filter (cons #'snitch-filter/log-filter slot-value-alist))
+      (let* ((filter (cons #'snitch-filter-log slot-value-alist))
              (orig-list (cond
                          ((snitch-network-entry-p event)
                           (intern-soft (format "snitch-network-%s" black-white)))
@@ -474,15 +475,16 @@ filter from an existing log line."
       (setq-local show-trailing-whitespace nil))))
 
 (defun snitch--hide-log-filter-window (buffer)
-  "Hide snitch log filter window."
+  "Hide snitch log filter window, which is the window currently
+displaying BUFFER."
   ;; based on which-key
   (when (buffer-live-p buffer)
     (quit-windows-on buffer)
     (run-hooks 'snitch-log-filter-window-close-hook)))
 
 (defun snitch--log-filter-window-size-to-fit (window)
-  "Resize log filter window to a reasonable height and maximum
-width."
+  "Resize log filter window, WINDOW, to a reasonable height and
+maximum width."
   ;; based on which-key
   ;; cap at 30% of the vertical height
   (let ((fit-window-to-buffer-horizontally t)

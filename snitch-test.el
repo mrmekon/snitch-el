@@ -73,7 +73,7 @@
         snitch-process-whitelist
         snitch-log-policy
         snitch-log-verbose
-        snitch--log-buffer-max-lines
+        snitch-log-buffer-max-lines
         snitch-on-event-functions
         snitch-on-allow-functions
         snitch-on-block-functions
@@ -91,7 +91,7 @@
   (setq snitch-process-whitelist (nth 5 vars))
   (setq snitch-log-policy (nth 6 vars))
   (setq snitch-log-verbose (nth 7 vars))
-  (setq snitch--log-buffer-max-lines (nth 8 vars))
+  (setq snitch-log-buffer-max-lines (nth 8 vars))
   (setq snitch-on-event-functions (nth 9 vars))
   (setq snitch-on-allow-functions (nth 10 vars))
   (setq snitch-on-block-functions (nth 11 vars))
@@ -109,7 +109,7 @@
   (setq snitch-process-whitelist '())
   (setq snitch-log-policy '())
   (setq snitch-log-verbose nil)
-  (setq snitch--log-buffer-max-lines 1000)
+  (setq snitch-log-buffer-max-lines 1000)
   (setq snitch-on-event-functions '())
   (setq snitch-on-allow-functions '())
   (setq snitch-on-block-functions '())
@@ -1282,15 +1282,15 @@ blacklisted events."
     (dotimes (i 20)  (snitch-test--process "ls" t))
     (should (eq 40 (snitch-test--log-lines)))
 
-    (setq snitch--log-buffer-max-lines 30)
+    (setq snitch-log-buffer-max-lines 30)
     (snitch--prune-log-buffer)
     (should (eq 30 (snitch-test--log-lines)))
 
-    (setq snitch--log-buffer-max-lines 10)
+    (setq snitch-log-buffer-max-lines 10)
     (snitch--prune-log-buffer)
     (should (eq 10 (snitch-test--log-lines)))
 
-    (setq snitch--log-buffer-max-lines 1)
+    (setq snitch-log-buffer-max-lines 1)
     (snitch--prune-log-buffer)
     (should (eq 1 (snitch-test--log-lines)))
 
@@ -1310,7 +1310,7 @@ blacklisted events."
     (dotimes (i 5)  (snitch-test--process "ls" t))
     (should (eq 10 (snitch-test--log-lines)))
 
-    (setq snitch--log-buffer-max-lines 5)
+    (setq snitch-log-buffer-max-lines 5)
     (snitch--start-log-prune-timer)
     (timer-set-idle-time snitch--log-prune-timer 0)
     (timer-activate snitch--log-prune-timer)
@@ -1416,7 +1416,7 @@ is shown or hidden."
   (snitch-init)
   (make-network-process :name "netpoop" :host "blommorna.com" :service 443 :family 'ipv4)
   (url-retrieve "http://google.com" #'identity)
-  (setq snitch--log-buffer-max-lines 5)
+  (setq snitch-log-buffer-max-lines 5)
   )
 
 
