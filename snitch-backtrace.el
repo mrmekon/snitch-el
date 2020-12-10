@@ -1,4 +1,4 @@
-;;; snitch-backtrace.el                    -*- lexical-binding: t; -*-
+;;; snitch-backtrace.el -- part of snitch  -*- lexical-binding: t; -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; See snitch.el for full details.
@@ -58,24 +58,33 @@
   "Cache a list of the Emacs site-lisp root directories.")
 
 (defvar snitch--function-to-file-cache nil
-  "Hash table cache of function names to the file the functions
-is defined in.")
+  "Cache of function-to-file mappings.
+
+Hash table cache of function names to the file the functions are
+defined in.")
 
 (defvar snitch--package-dirs-cache '()
-  "Hash table cache mapping elisp directories to active
-packages.")
+  "Cache of elisp package directories.
+
+Hash table cache mapping elisp directories to active packages.")
 
 
 (defun snitch--fn-hash-cmp (a b)
-  "Hash comparison function for function/package hash table,
+  "Hash comparison for function/package cache.
+
+Hash comparison function for function/package hash table,
 since functions can be either function objects or strings and
-require different comparisons."
+require different comparisons.
+
+Return t if A equals B."
   (if (and (functionp a) (functionp b))
       (eq a b)
     (equal a b)))
 
 (defun snitch--find-function-file (fn)
-  "Look up the file a function is defined in, caching it in a
+  "Find file owning function FN.
+
+Look up the file a function is defined in, caching it in a
 hash table for quicker subsequent accesses."
   (unless snitch--function-to-file-cache
     (define-hash-table-test 'snitch-fn-hash-cmp
@@ -93,8 +102,10 @@ hash table for quicker subsequent accesses."
             nil))))))
 
 (defun snitch--site-lisp-dirs ()
-  "Find all directories in elisp load path that are not in the
-user dir."
+  "Find site-lisp directories.
+
+Find all directories in elisp load path that are not in the user
+dir."
   (if (not snitch--site-lisp-dir-cache)
       (let* ((user-dir (expand-file-name user-emacs-directory))
              (pkg-dir (expand-file-name package-user-dir))
@@ -111,7 +122,9 @@ user dir."
     snitch--site-lisp-dir-cache))
 
 (defun snitch--site-lisp-roots ()
-  "Find the 'root' directories, hopefully a list of
+  "Find the root site-lisp directories.
+
+Find the 'root' directories, hopefully a list of
 system-wide/non-user base directories containing elisp files."
   (if (not snitch--site-lisp-root-cache)
       (let ((dirs
@@ -124,7 +137,9 @@ system-wide/non-user base directories containing elisp files."
     snitch--site-lisp-root-cache))
 
 (defun snitch--dir-in-site-lisp (dir)
-  "Check if directory DIR is a subdirectory of one of the
+  "Check if DIR is in a site-lisp directory.
+
+Check if directory DIR is a subdirectory of one of the
 system-wide elisp directories found by
 `snitch--site-lisp-roots'."
   (not (null (cl-loop for site-dir in (snitch--site-lisp-roots)
@@ -132,8 +147,10 @@ system-wide elisp directories found by
                       collect site-dir))))
 
 (defun snitch--fill-package-dirs-cache ()
-  "Cache package directories in a hash table for faster
-subsequent accesses."
+  "Fill package directory cache.
+
+Cache package directories in a hash table for faster subsequent
+accesses."
   (setq snitch--package-dirs-cache
         (make-hash-table :test 'equal :size (length (package--alist))))
   (cl-loop for (pkgname . pkgdesc) in (package--alist)
@@ -144,8 +161,10 @@ subsequent accesses."
   (hash-table-count snitch--package-dirs-cache))
 
 (defun snitch--package-from-dir (dir)
-  "Given a directory DIR, returns a package that owns the files
-in that directory."
+  "Find package that owns directory DIR.
+
+Given a directory DIR, returns a package that owns the files in
+that directory."
   (when (null snitch--package-dirs-cache)
     (snitch--fill-package-dirs-cache))
   (gethash (file-name-as-directory dir) snitch--package-dirs-cache))
@@ -171,9 +190,11 @@ one of the following special values:
           'user)))))
 
 (defun snitch--maybe-add-timer-backtrace (bt timer)
-  "If the given backtrace BT terminates in the timer execution
+  "Try to add a saved timer backtrace to current backtrace.
+
+If the given backtrace BT terminates in the timer execution
 handler, check if snitch has cached the backtrace for the
-executing timer and append that backtrace to BT."
+executing timer, TIMER, and append that backtrace to BT."
   (let ((last-fn (nth 0 (car bt)))
         (reverse-bt (nreverse bt)))
     (if (eq last-fn #'timer-event-handler)
@@ -184,10 +205,12 @@ executing timer and append that backtrace to BT."
       reverse-bt)))
 
 (defun snitch--backtrace (&optional follow-timer)
-  "Return a full list of backtrace entries (the full function
-call stack) where each entry is a list containing (FUNCTION PATH
-PACKAGE).  Entries related to the snitch callstack are
-filtered out.
+  "Return a backtrace usable by snitch.
+
+Return a full list of backtrace entries (the full function call
+stack) where each entry is a list containing (FUNCTION PATH
+PACKAGE).  Entries related to the snitch callstack are filtered
+out.
 
 FUNCTION is a function symbol if available, or one of the special
 symbols ‘lambda’, ‘macro’, or ‘compiled-function’ otherwise.
@@ -260,7 +283,9 @@ concatenated together."
       (nreverse stack))))
 
 (defun snitch--package-type-more-important (a b)
-  "Return t if package type of 'a' is more important than the
+  "Determine if A is a more important package than B.
+
+Return t if package type of 'a' is more important than the
 package type of b, where:
 
 - nil > nil
@@ -276,7 +301,7 @@ started the chain.
 
 On the other hand, for packages, we really want to focus on the
 very last function that was responsible for triggering the rest
-of the emacs internal activity."
+of the Emacs internal activity."
   (cond
    ;; nil only greater than nil
    ((null a) (member b (list nil)))
@@ -294,8 +319,10 @@ of the emacs internal activity."
 
 
 (defun snitch--responsible-caller (backtrace)
-  "Return a single entry from BACKTRACE which is snitch’s best
-guess for which function on the stack frame should be considered
+  "Determine entry in backtrace responsible for the event.
+
+Return a single entry from BACKTRACE which is snitch’s best guess
+for which function on the stack frame should be considered
 ’responsible’ for causing this event.  snitch uses this to assign
 one single function/file/package as the responsible party for an
 event, for use in filtering.

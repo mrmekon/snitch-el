@@ -1,4 +1,4 @@
-;;; snitch-log.el                          -*- lexical-binding: t; -*-
+;;; snitch-log.el -- part of snitch        -*- lexical-binding: t; -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; See snitch.el for full details.
@@ -46,23 +46,28 @@
   "Name of the buffer for the log filter 'wizard' popup window.")
 
 (defvar snitch--log-filter-buffer nil
-  "Buffer in the log filter 'wizard' popup window")
+  "Buffer in the log filter 'wizard' popup window.")
 
 (defvar snitch--log-prune-timer nil
-  "Periodic timer to prune snitch log buffer to its maximum
+  "Timer to prune snitch log.
+
+Periodic timer to prune snitch log buffer to its maximum
 permitted size.")
 
 (defun snitch--exact-log-match (policies)
-  "Return true if any of policies are explicitly defined in
-snitch-log-policy."
+  "Check if log policies are explicitly enabled.
+
+Return true if any of POLICIES are explicitly defined in
+‘snitch-log-policy’."
   (seq-some 'identity
             (mapcar (lambda (l) (member l snitch-log-policy))
                     policies)))
 
 (defun snitch--log-policy-match (policies)
-  "Return true of any of the log policies in POLICIES are
-covered by one of the currently enabled policies in
-‘snitch-log-policy’.
+  "Check of current log policy matches given policies.
+
+Return true of any of the log policies in POLICIES are covered by
+one of the currently enabled policies in ‘snitch-log-policy’.
 
 This does not require exact matches.  For instance, if POLICIES
 contains ‘process-whitelisted’ and ‘snitch-log-policy’ contains
@@ -92,8 +97,10 @@ larger set including both ‘process-whitelisted’ and
          (member 'blocked snitch-log-policy)) t)))
 
 (defun snitch--pretty-obj-string (event)
-  "Return an event eieio object in a 'pretty-printed' form, which
-can be used to deserialize back into an object with eval."
+  "Pretty-print a snitch event.
+
+Take an event eieio object, EVENT, and return it as a
+'pretty-printed' string."
   ;; write eieio object out as a pretty string by redirecting
   ;; standard output stream to a function that consumes the output
   ;; char by char.  This must be reversed and concatenated to
@@ -107,7 +114,9 @@ can be used to deserialize back into an object with eval."
     pretty-obj))
 
 (defun snitch--propertize (logmsg event)
-  "Add text properties to LOGMSG with elements from EVENT.  This
+  "Add snitch event as properties to log message.
+
+Add text properties to LOGMSG with elements from EVENT.  This
 allows the log filter commands to re-assemble an event from its
 log message."
   (cond
@@ -134,11 +143,13 @@ log message."
                 'snitch-family (oref event family)))))
 
 (defun snitch--run-filter-log-hooks (logmsg)
-  "Run all hooks registered in ‘snitch-log-functions’ with the
-given log message.  Return the original log message if all hooks
-return t (or none are defined), or return nil or a modified new
-log string based on the first hook to return something other than
-t."
+  "Run hooks to filter snitch log messages.
+
+Run all hooks registered in ‘snitch-log-functions’ with the given
+log message, LOGMSG.  Return the original log message if all
+hooks return t (or none are defined), or return nil or a modified
+new log string based on the first hook to return something other
+than t."
   (if (null snitch-log-functions)
       logmsg
     (cl-loop for fn in snitch-log-functions with res = nil
@@ -149,9 +160,11 @@ t."
              finally return logmsg)))
 
 (defun snitch--log (evt-type event)
-  "Log a snitch event to the dedicated snitch firewall log
-buffer.  EVENT is an event object, and EVT-TYPE is any policy
-type from ‘snitch-log-policies’."
+  "Log a snitch event.
+
+Log a snitch event to the dedicated snitch firewall log buffer.
+EVENT is an event object, and EVT-TYPE is any policy type from
+‘snitch-log-policies’."
   (when (snitch--log-policy-match (list evt-type))
     (let* ((name (cond ((eq evt-type 'all) "event")
                        ((eq evt-type 'whitelisted) "whitelisted")
@@ -217,7 +230,9 @@ type from ‘snitch-log-policies’."
                :data event)))))
 
 (defun snitch--prune-log-buffer ()
-  "Prune the size of log buffer to at most
+  "Prune the snitch log buffer.
+
+Prune the size of log buffer to at most
 ‘snitch-log-buffer-max-lines’ lines long."
   ;; ensure timer is stopped.  it will be started again by the next
   ;; log event.  it’s wasteful to have a timer running when we know
@@ -240,14 +255,18 @@ type from ‘snitch-log-policies’."
           (setq buffer-read-only t))))))
 
 (defun snitch--maybe-start-log-prune-timer ()
-  "Start the snitch log pruning timer if it is not already
+  "Possibly start the snitch log pruning timer.
+
+Start the snitch log pruning timer if it is not already
 running."
   (unless snitch--log-prune-timer
     (snitch--start-log-prune-timer)))
 
 (defun snitch--start-log-prune-timer ()
-  "Start the snitch log pruning timer.  This is a non-repeating
-timer that calls snitch--prune-log-buffer after a period of
+  "Start the snitch log pruning timer.
+
+Start the snitch log pruning timer.  This is a non-repeating
+timer that calls ‘snitch--prune-log-buffer’ after a period of
 idle."
   (setq snitch--log-prune-timer
         (run-with-idle-timer 30 nil #'snitch--prune-log-buffer)))
@@ -269,7 +288,9 @@ idle."
 
 ;;;###autoload
 (defun snitch-filter-from-log ()
-  "Opens an interactive 'wizard' to create a new snitch
+  "Open snitch ’log filter’ wizard on selected log entry.
+
+Opens an interactive 'wizard' to create a new snitch
 whitelist/blacklist rule based on the event log under the cursor.
 
 To use the wizard, move the cursor over an item in the snitch
@@ -311,11 +332,14 @@ persistently as a customized variable."
                                         :args args)))))))
 
 (defun snitch--run-log-filter-wizard (event)
-  "Runs the snitch log filter 'wizard', an interactive popup
-window to help a user create a new blacklist or whitelist filter
-based on a log entry.  This function sets up the window,
-populates it, loops over user keypresses, and eventually saves
-the filter to the customization variable if appropriate."
+  "Run user interface for ’log filter’ wizard.
+
+Runs the snitch log filter 'wizard', an interactive popup window
+to help a user create a new blacklist or whitelist filter based
+on a log entry which has been converted back into a snitch event,
+EVENT.  This function sets up the window, populates it, loops
+over user keypresses, and eventually saves the filter to the
+customization variable if appropriate."
   ;; create buffer if needed
   (when (null snitch--log-filter-buffer)
     (snitch--init-log-filter-buffer))
@@ -384,19 +408,23 @@ the filter to the customization variable if appropriate."
         (customize-save-variable orig-list new-list)))))
 
 (defun snitch--log-filter-map-slot-from-key (map key)
-  "Given a map from ‘snitch--log-filter-map’, returns the slot
-matching to the given keypress, or nil."
+  "Return field matching key press in snitch log filter.
+
+Given a map from ‘snitch--log-filter-map’, MAP, returns the slot
+matching to the given keypress, KEY, or nil."
   (cl-loop for (slot . plist) in map
            when (string-equal (plist-get plist 'key) key)
            return slot
            finally return nil))
 
 (defun snitch--log-filter-map (event)
-  "Returns an alist of (SLOT . PLIST) pairs, where each PLIST
+  "Return a mapping of event fields to names and keymaps.
+
+Returns an alist of (SLOT . PLIST) pairs, where each PLIST
 contains a field name, a key to press to select it, and a
 ‘mnemonic’ version of the name with the key highlighted in square
 brackets.  The correct set of fields is returned based on the
-given event type.  All of this stuff is used to display the
+type of event in EVENT.  All of this stuff is used to display the
 fields, and to interpret which field to select when receiving
 user keypresses."
   (let ((common-alist nil)
@@ -429,11 +457,13 @@ user keypresses."
      (t common-alist))))
 
 (defun snitch--redraw-log-filter-buffer (evt selected)
-  "Draw the text contents of the log-filter menu based on the
-given event and list of currently selected fields.  Each field
-name is drawn on a separate line, along with its value in the
-current event.  The ‘mnemonic’ version of the field name is
-displayed, with the character to press surrounded by square
+  "Draw contents of snitch log filter buffer.
+
+Draw the text contents of the log-filter menu based on the given
+event, EVT, and list of currently selected fields, SELECTED.
+Each field name is drawn on a separate line, along with its value
+in the current event.  The ‘mnemonic’ version of the field name
+is displayed, with the character to press surrounded by square
 brackets.  Fields that are currently selected display in a
 different font."
   (with-current-buffer snitch--log-filter-buffer
@@ -458,8 +488,10 @@ different font."
       (goto-char (point-min)))))
 
 (defun snitch--init-log-filter-buffer ()
-  "Initialize buffer for displaying UI to generate a snitch
-filter from an existing log line."
+  "Initialize log filter UI.
+
+Initialize buffer for displaying UI to generate a snitch filter
+from an existing log line."
   ;; logic looted from which-key
   (unless (buffer-live-p snitch--log-filter-buffer)
     (setq snitch--log-filter-buffer
@@ -475,7 +507,9 @@ filter from an existing log line."
       (setq-local show-trailing-whitespace nil))))
 
 (defun snitch--hide-log-filter-window (buffer)
-  "Hide snitch log filter window, which is the window currently
+  "Hide snitch log filter UI.
+
+Hide snitch log filter window, which is the window currently
 displaying BUFFER."
   ;; based on which-key
   (when (buffer-live-p buffer)
@@ -483,7 +517,9 @@ displaying BUFFER."
     (run-hooks 'snitch-log-filter-window-close-hook)))
 
 (defun snitch--log-filter-window-size-to-fit (window)
-  "Resize log filter window, WINDOW, to a reasonable height and
+  "Resize snitch log filter window.
+
+Resize log filter window, WINDOW, to a reasonable height and
 maximum width."
   ;; based on which-key
   ;; cap at 30% of the vertical height
@@ -493,7 +529,9 @@ maximum width."
     (fit-window-to-buffer window max-height)))
 
 (defun snitch--show-log-filter-window ()
-  "Open or switch focus to the log filter window, resizing it as
+  "Show snitch log filter window.
+
+Open or switch focus to the log filter window, resizing it as
 necessary."
   ;; based on which-key
   (let* ((alist

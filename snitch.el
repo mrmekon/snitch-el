@@ -1,4 +1,4 @@
-;;; snitch.el --- An emacs firewall        -*- lexical-binding: t; -*-
+;;; snitch.el --- An Emacs firewall        -*- lexical-binding: t; -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; Copyright (C) 2020 Trevor Bentley
@@ -603,18 +603,20 @@ protocol family of the connection that snitch is considering.")
 
 (defconst snitch-source-package-types
   '(built-in site-lisp user)
-  "Possible types for a snitch event's package source, as found
-in the ‘src-pkg’ field of each event object.  In addition to
-these pre-defined types, any loaded package name (as a symbol) is
-a permitted type as well.
+  "Possible types for a snitch event's package source.
+
+Types are specified in the ‘src-pkg’ field of each event object.
+
+In addition to these pre-defined types, any loaded package
+name (as a symbol) is a permitted type as well.
 
   nil -- unknown source, including lambdas, closures, and
 compiled functions.
 
-  'built-in' -- package provided by emacs, and responds true to
+  'built-in' -- package provided by Emacs, and responds true to
 the ‘package-built-in-p’ function.
 
-  'site-lisp' -- package is found in one of the emacs common
+  'site-lisp' -- package is found in one of the Emacs common
 directories (i.e. a system-wide shared elisp directory), but does
 not report itself as a built-in.
 
@@ -667,9 +669,11 @@ were blocked by a blacklist rule")
     network-allowed
     network-whitelisted
     network-blacklisted)
-  "All of the logging policies for snitch.  Provide a list of
-these symbols to ‘snitch-log-policy’ to enable logging of events of
-the corresponding type.
+  "Permitted logging policies for snitch.
+
+Provide a list of these symbols to ‘snitch-log-policy’ to enable
+logging of events of the corresponding type.  Any combination can
+be combined, or use ‘all’ to include everything.
 
   'all' -- logs every event, before a decision is made.
 
@@ -706,8 +710,10 @@ whitelist rule or registered hook.")
 ;;
 
 (defun snitch--service-to-port (service)
-  "Convert SERVICE argument of ‘make-network-process’ into a symbol
-or number."
+  "Convert SERVICE into a symbol or number.
+
+SERVICE is the service field passed to ‘make-network-process’,
+representing the port to connect to."
   (cond
    ((symbolp service) service)
    ;; TODO: handle special service names, ex: "https"
@@ -723,12 +729,15 @@ or number."
                        list-hook-fns
                        default-evt-type
                        default-hook-fns)
-  "Return t if EVENT is to be filtered differently from the
-default policy, nil if default action is to be taken.  The choice
-of DECISION-LIST (whitelist or blacklist) and the event types
-(LIST-EVT-TYPE and DEFAULT-EVT-TYPE) determines whether default
-is block/allow.  Registered user hooks are called, and potentially
-alter the decision.
+  "Decide whether an event should use the default action.
+
+Return t if EVENT is to be filtered differently from the default
+policy, nil if default action is to be taken.  The choice of
+DECISION-LIST (whitelist or blacklist) and the event types
+\(LIST-EVT-TYPE and DEFAULT-EVT-TYPE) determines whether default
+is block/allow.  Registered user hooks are called, and
+potentially alter the decision: LIST-HOOK-FNS if the function was
+in the list, or DEFAULT-HOOK-FNS if it was not.
 
 This function only generates a decision.  It does not perform the
 actual block or pass action.
@@ -759,7 +768,9 @@ block action should be taken."
              t)))
 
 (defun snitch--wrap-internal (event prefix orig-fun args)
-  "Execute the wrapped function, ORIG-FUN with its original
+  "Perform snitch’s core firewall decision.
+
+Execute the wrapped function, ORIG-FUN with its original
 arguments ARGS if EVENT is allowed by default policy or
 whitelist.  PREFIX is the string 'process' or 'network' to
 indicate the type of event.  Registered hooks are called before
@@ -804,9 +815,11 @@ the globally configured log filters."
 
 
 (defun snitch--wrap-make-process (orig-fun &rest args)
-  "Wrap a call to make-process in the snitch firewall decision
+  "Wrap subprocesses with snitch firewall.
+
+Wrap a call to ‘make-process’ in the snitch firewall decision
 engine.  ORIG-FUN is called only if the snitch firewall rules
-permit it."
+permit it, receiving its default arguments ARGS."
   (let* ((bt (snitch--backtrace t))
          (caller (snitch--responsible-caller bt))
          (event (snitch-process-entry
@@ -820,9 +833,11 @@ permit it."
     (snitch--wrap-internal event "process" orig-fun args)))
 
 (defun snitch--wrap-make-network-process (orig-fun &rest args)
-  "Wrap a call to make-network-process in the snitch firewall
+  "Wrap network connections with snitch firewall.
+
+Wrap a call to ‘make-network-process’ in the snitch firewall
 decision engine.  ORIG-FUN is called only if the snitch firewall
-rules permit it."
+rules permit it, receiving its default arguments ARGS."
   (let* ((bt (snitch--backtrace t))
          (caller (snitch--responsible-caller bt))
          (event (snitch-network-entry
@@ -837,7 +852,9 @@ rules permit it."
     (snitch--wrap-internal event "network" orig-fun args)))
 
 (defun snitch--register-wrapper-fns ()
-  "Add snitch decision engine around the lowest-level emacs
+  "Enable snitch firewall wrapping functions.
+
+Add snitch decision engine around the lowest-level Emacs
 functions responsible for launching subprocesses and opening
 network connections."
   ;; lowest-level functions, implemented in C
@@ -886,8 +903,9 @@ may be lost in this process."
 
 ;;;###autoload
 (defun snitch-restart ()
-  "Restart the snitch firewall, unloading and reloading all
-hooks."
+  "Restart the snitch firewall.
+
+Unload and reload all hooks and timers."
   (interactive)
   (when (snitch--deinit)
     (snitch--init)))

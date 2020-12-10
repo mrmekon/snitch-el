@@ -1,4 +1,4 @@
-;;; snitch-timer.el                        -*- lexical-binding: t; -*-
+;;; snitch-timer.el -- part of snitch      -*- lexical-binding: t; -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; See snitch.el for full details.
@@ -42,15 +42,19 @@
 ;;; Code:
 
 (defvar snitch--timer-alist '()
-  "Cache all timers registered with emacs, along with their
+  "Cache of Emacs timers tracked by snitch.
+
+Cache all timers registered with Emacs, along with their
 backtrace and a timeout.  Stored as a list of (TIMER . METADATA)
 cons cell entries, where each METADATA item is a (BACKTRACE
-. TIMEOUT) cons cell.  TIMER is a standard emacs timer object,
-BACKTRACE is a snitch backtrace, and TIMEOUT is a standard emacs
+. TIMEOUT) cons cell.  TIMER is a standard Emacs timer object,
+BACKTRACE is a snitch backtrace, and TIMEOUT is a standard Emacs
 time object.")
 
 (defvar snitch--timer-removal-queue '()
-  "List of timers to be removed from snitch’s backtrace tracking
+  "List of Emacs timers to be removed from snitch’s tracking.
+
+List of timers to be removed from snitch’s backtrace tracking
 when the timer call stack is empty.  Timers are queued to be
 removed instead of removed immediately because of the (likely)
 possibility of recursive removals.  If the timer is removed deep
@@ -59,17 +63,23 @@ backtraces as the stack unwinds because the timer is already
 gone.")
 
 (defvar snitch--timer-count 0
-  "Total number of timers snitch has saved (timers registered
-with emacs and intercepted by snitch).")
+  "Total number of timers snitch has tracked.
+
+Total number of timers snitch has saved (timers registered with
+Emacs and intercepted by snitch).")
 
 (defvar snitch--timer-removed-count 0
-  "Total number of timers snitch has removed (timers fired or
+  "Total number of timers snitch has finished tracking.
+
+Total number of timers snitch has removed (timers fired or
 cancelled that snitch knew about).")
 
 (defvar snitch--timer-missed-count 0
-  "Total number of timers snitch has missed.  This is timers that
+  "Total number of timers that snitch failed to track.
+
+Total number of timers snitch has missed.  This is timers that
 are removed (cancelled or triggered) while not currently tracked
-in snitch--timer-alist.  This can happen naturally if snitch is
+in ‘snitch--timer-alist’.  This can happen naturally if snitch is
 started when timers already exist, but could also indicate bugs
 causing snitch to lose track of timers.")
 
@@ -79,27 +89,35 @@ Timer handlers often attempt to manually remove themselves,
 resulting in several calls to remove the same timer.")
 
 (defvar snitch--max-timer-backtraces 1000
-  "Maximum number of timer backtraces that snitch should keep
+  "Max number of timer backtrace snitch tracks at a time.
+
+Maximum number of timer backtraces that snitch should keep
 track of.  If more timers than this are started without ending,
 new timers are ignored.")
 
 (defvar snitch--save-unique-timer-fns nil
-  "While t, snitch saves a list of the unique functions
+  "Whether snitch saves names of timers tracked.
+
+While t, snitch saves a list of the unique functions
 registered as timers, along with a count of how many times they
 were seen.  This allows tracking which high-frequency timers are
-common in your emacs, so they can be added to the timer
+common in your Emacs, so they can be added to the timer
 blacklist.")
 
 (defvar snitch--unique-timer-fns '()
-  "A list of unique timer functions encountered, and how many
+  "List of unique timer functions snitch has tracked.
+
+A list of unique timer functions encountered, and how many
 times they were seen during the period that
-snitch--save-unique-timer-fns was t.")
+‘snitch--save-unique-timer-fns’ was t.")
 
 (defun snitch-monitor-unique-timer-fns (&optional time no-reset)
-  "Keeps a running count of each unique timer function that
-arrives during time period TIME.  After TIME has elapsed, prints
-all timers seen along with the number of times each was seen
-during the monitoring time period.
+  "Print names of timer functions snitch recently tracked.
+
+Keeps a running count of each unique timer function that arrives
+during time period TIME.  After TIME has elapsed, prints all
+timers seen along with the number of times each was seen during
+the monitoring time period.
 
 Each call to this function resets the seen timer list to empty.
 To continue capturing without clearing the list, set NO-RESET to
@@ -118,23 +136,32 @@ t."
               do (message "%s: %d" timer count)))))
 
 (defun snitch--timer-test-idle-timeout (time)
-  "Return t if an idle timer has timed out (current idle time
+  "Whether a tracked idle timer has timed out.
+
+Return t if an idle timer has timed out (current idle time
 greater than TIME)."
   (let ((idle (current-idle-time)))
     (when idle
       (time-less-p time idle))))
 
 (defun snitch--timer-test-timeout (time)
-  "Return t if a regular timer has timed out (current absolute time greater than TIME)."
+  "Whether a tracked normal timer has timed out.
+
+Return t if a regular timer has timed out (current absolute time
+greater than TIME)."
   (time-less-p time (current-time)))
 
 (defun snitch--timer-timeout (timer)
-  "Calculate a timeout for a timer, a few minutes longer than it
-is originally scheduled to fire."
+  "Calculate timeout period for a tracked timer.
+
+Calculate a timeout for a timer, TIMER, a few minutes longer than
+it is originally scheduled to fire."
   (time-add (timer--time timer) (time-convert (* 60 5))))
 
 (defun snitch--fn-repr (fn)
-  "Encode FN in a semi-human-readable form if it is a compiled
+  "Output function in human-readable format.
+
+Encode FN in a semi-human-readable form if it is a compiled
 function."
   (cond
    ((byte-code-function-p fn)
@@ -151,7 +178,9 @@ function."
    (t fn)))
 
 (defun snitch--save-timer-function (fn)
-  "Save timer function FN in SNITCH--UNIQUE-TIMER-FNS if it does
+  "Save recently tracked timer in cache.
+
+Save timer function FN in SNITCH--UNIQUE-TIMER-FNS if it does
 not already exist, otherwise increment its counter.  Byte
 compiled functions are stored as a hash, since their names are
 unknown."
@@ -163,12 +192,17 @@ unknown."
             (cons (cons fn-rep 1) snitch--unique-timer-fns)))))
 
 (defun snitch--save-timer-backtrace (orig-fn &rest args)
-  "Cache a timer and its associated backtrace.  This function is
-hooked around all functions that register new timers with emacs.
+  "Save timer and its backtrace in snitch’s timer cache.
+
+Cache a timer and its associated backtrace.  This function is
+hooked around all functions that register new timers with Emacs.
 It saves the backtrace and a timeout period for when snitch
 should stop listening for it in case the timer is somehow lost.
-It calls the original emacs timer registration function without
-modification and returns the result."
+It calls the original Emacs timer registration function without
+modification and returns the result.
+
+Always calls the original function ORIG-FN is called with its
+arguments ARGS unmodified."
   (let* ((bt (snitch--backtrace))
          ;;(bt '()) ;;(snitch--backtrace))
          (timer (nth 0 args))
@@ -192,7 +226,9 @@ modification and returns the result."
     result))
 
 (defun snitch--remove-timed-out-timers ()
-  "Iterate of all of snitch's saved timer backtraces and remove
+  "Remove tracked timers that have timed out.
+
+Iterate of all of snitch's saved timer backtraces and remove
 any that have timed out."
   (cl-loop for (timer . (_bt . timeout-fn)) in snitch--timer-alist
            when (funcall timeout-fn)
@@ -208,7 +244,9 @@ any that have timed out."
                      (delq match snitch--timer-alist))))))
 
 (defun snitch--remove-timers (timers)
-  "Remove all timers in TIMERS from the timer backtrace cache, if
+  "Remove a list of timers from snitch’s tracking.
+
+Remove all timers in TIMERS from the timer backtrace cache, if
 present."
   (let ((total-timers (length timers))
         (removed-timers 0))
@@ -231,11 +269,16 @@ present."
     (list removed-timers total-timers)))
 
 (defun snitch--remove-timer-backtrace (orig-fn timer)
-  "Remove a timer from snitch’s cache.  This function is wrapped
+  "Remove a timer from snitch’s tracking cache.
+
+Remove a timer from snitch’s cache.  This function is wrapped
 around ‘timer-event-handler’ and ‘cancel-timer’, triggering
 whenever a timer either fires or is explicitly cancelled.  It
 removes snitch’s decorated copy and calls the originally
-requested function as normal."
+requested function as normal.
+
+Always calls the original function ORIG-FN with its original
+argument, TIMER."
   (setq snitch--wrap-timer-depth (+ snitch--wrap-timer-depth 1))
   (let* ((result (apply orig-fn (list timer))))
     ;; TODO: this is probably wrong.  What if one timer removed a
@@ -279,7 +322,9 @@ requested function as normal."
                    #'snitch--remove-timer-backtrace))
 
 (defun snitch--register-timer-hooks ()
-  "Add timer hooks so snitch can provide backtraces all the way
+  "Register snitch’s timer tracing hooks.
+
+Add timer hooks so snitch can provide backtraces all the way
 to the source of whichever function registered the timer."
   (setq snitch--timer-alist '()
         snitch--timer-removal-queue '()
@@ -298,7 +343,9 @@ to the source of whichever function registered the timer."
                 #'snitch--remove-timer-backtrace))
 
 (defun snitch--debug-print-timer-state (&optional alist)
-  "Print current state of snitch’s timer tracing to the messages
+  "Print state of snitch’s timer tracing.
+
+Print current state of snitch’s timer tracing to the messages
 log.  If ALIST is t, also prints the currently cached timers."
   (interactive)
   (message "%s" (current-time-string))
@@ -312,7 +359,9 @@ log.  If ALIST is t, also prints the currently cached timers."
              do (message "timeout? %s" (funcall timeout-fn)))))
 
 (defun snitch--activate-timer-trace ()
-  "Activate snitch timer tracing by hooking the appropriate
+  "Activate snitch timer tracing.
+
+Activate snitch timer tracing by hooking the appropriate
 functions."
   (interactive)
   (snitch--register-timer-hooks))
@@ -323,7 +372,9 @@ functions."
   (snitch--remove-timer-hooks))
 
 (defun snitch--debug-test-print-timers ()
-  "Print snitch’s cached timers, and all of emacs’ currently
+  "Print snitch’s cached timer state.
+
+Print snitch’s cached timers, and all of Emacs’ currently
 registered timers."
   (cl-loop for (timer . meta) in snitch--timer-alist
            do

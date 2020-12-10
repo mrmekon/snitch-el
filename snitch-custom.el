@@ -1,4 +1,4 @@
-;;; snitch-custom.el                       -*- lexical-binding: t; -*-
+;;; snitch-custom.el -- part of snitch     -*- lexical-binding: t; -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; See snitch.el for full details.
@@ -50,7 +50,9 @@
 
 ;;;###autoload
 (defcustom snitch-lighter nil
-  "Text to display in mode-line when snitch is enabled, or nil to
+  "Text to display for snitch in mode-line.
+
+Text to display in mode-line when snitch is enabled, or nil to
 hide."
   :type 'string
   :group 'snitch)
@@ -64,8 +66,10 @@ hide."
 
 ;;;###autoload
 (defcustom snitch-log-policy '(all)
-  "Specifies types of actions that snitch should log.  Provided
-as a list of symbols defined in snitch-log-policies"
+  "Logging policies for snitch.
+
+Specifies types of actions that snitch should log.  Provided as a
+list of symbols defined in ‘snitch-log-policies’"
   :type '(repeat (choice (const all)
                          (const blocked)
                          (const allowed)
@@ -75,20 +79,24 @@ as a list of symbols defined in snitch-log-policies"
 
 ;;;###autoload
 (defcustom snitch-log-verbose nil
-  "Whether the log output should be extra verbose (pretty-printed
+  "Enable verbose logging for snitch.
+
+Whether the log output should be extra verbose (pretty-printed
 multi-line event logs)."
   :type 'boolean
   :group 'snitch-log)
 
 ;;;###autoload
 (defcustom snitch-log-buffer-max-lines 1000
-  "Maximum number of lines to keep in the snitch event log
+  "Max lines in snitch log buffer.
+
+Maximum number of lines to keep in the snitch event log
 buffer.  When it grows larger than this, the least recent lines
 are periodically truncated by a timer.
 
 Since trimming is timer-based, the log buffer can temporarily
 grow larger than the requested value.  It is only trimmed after a
-period of emacs idle time.
+period of Emacs idle time.
 
 Set to 0 for unlimited."
   :type 'number
@@ -96,7 +104,9 @@ Set to 0 for unlimited."
 
 ;;;###autoload
 (defcustom snitch-enable-notifications nil
-  "Whether snitch should raise notifications for each log
+  "Enable pop-up notifications for snitch events.
+
+Whether snitch should raise notifications for each log
 message, in addition to printing them in the log buffer.
 
 This feature requires the ‘alert’ package to be available.
@@ -117,20 +127,22 @@ the event object in ‘data’."
 
 ;;;###autoload
 (defcustom snitch-process-policy 'allow
-  "Default firewall policy for subprocesses.  When set to allow,
-exceptions can be specified in snitch-process-blacklist.  When
-set to deny, exceptions can be specified in
-snitch-process-whitelist."
+  "Default firewall policy for subprocesses.
+
+When set to allow, exceptions can be specified in
+‘snitch-process-blacklist’.  When set to deny, exceptions can be
+specified in ‘snitch-process-whitelist’."
   :type '(choice (const deny)
                  (const allow))
   :group 'snitch-policy)
 
 ;;;###autoload
 (defcustom snitch-network-policy 'allow
-  "Default firewall policy for network connections.  When set to
-allow, exceptions can be specified in snitch-network-blacklist.
-When set to deny, exceptions can be specified in
-snitch-network-whitelist."
+  "Default firewall policy for network connections.
+
+When set to allow, exceptions can be specified in
+‘snitch-network-blacklist’.  When set to deny, exceptions can be
+specified in ‘snitch-network-whitelist’."
   :type '(choice (const deny)
                  (const allow))
   :group 'snitch-policy)
@@ -145,9 +157,10 @@ snitch-network-whitelist."
 ;;;###autoload
 (defcustom snitch-network-blacklist
   '()
-  "A list of rules defining which network connections are
-forbidden when snitch.el is configured to allow connections by
-default.
+  "List of forbidden network connections.
+
+A list of rules defining which network connections are forbidden
+when snitch.el is configured to allow connections by default.
 
 See documentation of ‘snitch-process-whitelist’ for details."
   :group 'snitch-rules
@@ -157,9 +170,10 @@ See documentation of ‘snitch-process-whitelist’ for details."
 ;;;###autoload
 (defcustom snitch-network-whitelist
   '()
-  "A list of rules defining which network connections are
-permitted when snitch.el is configured to deny connections by
-default.
+  "List of permitted network connections.
+
+A list of rules defining which network connections are permitted
+when snitch.el is configured to deny connections by default.
 
 See documentation of ‘snitch-process-whitelist’ for details."
   :group 'snitch-rules
@@ -175,13 +189,15 @@ See documentation of ‘snitch-process-whitelist’ for details."
     ;; Example: block processes from system packages
     ;;(snitch-filter/src-pkg . (site-lisp))
 
-    ;; Example: block processes from emacs built-ins
+    ;; Example: block processes from Emacs built-ins
     ;;(snitch-filter/src-pkg . (built-in))
 
     ;; Example: block processes from an unknown user package
     ;;(snitch-filter/src-pkg . (user))
     )
-  "A list of rules defining which subprocess calls are forbidden
+  "List of forbidden subprocesses.
+
+A list of rules defining which subprocess calls are forbidden
 when snitch.el is configured to allow subprocesses by default.
 
 See documentation of ‘snitch-process-whitelist’ for details."
@@ -192,7 +208,9 @@ See documentation of ‘snitch-process-whitelist’ for details."
 ;;;###autoload
 (defcustom snitch-process-whitelist
   '()
-  "A list of rules defining which subprocess calls are permitted
+  "List of permitted subprocesses.
+
+A list of rules defining which subprocess calls are permitted
 when snitch.el is configured to deny subprocesses by default.
 
 If any filter returns true, the process is immediately allowed
@@ -205,7 +223,7 @@ form:
      (filter-fn2 . (arg2 arg3))
      (filter-fn3 . (arg4 arg5 arg6)))
 
-Each filter function must take a snitch-network-entry eieio
+Each filter function must take a ‘snitch-network-entry’ eieio
 object as its first parameter, and any number of subsequent
 arguments which are specified as the arguments in this alist.
 
@@ -328,15 +346,13 @@ Returning nil interrupts the block, allowing the event to pass."
 
 ;;;###autoload
 (defcustom snitch-init-hook '()
-  "Called immediately after snitch initializes and starts
-monitoring."
+  "Called immediately after snitch initializes."
   :group 'snitch-hooks
   :type 'hook)
 
 ;;;###autoload
 (defcustom snitch-deinit-hook '()
-  "Called immediately after snitch deinitializes and stops
-monitoring."
+  "Called immediately after snitch deinitializes."
   :group 'snitch-hooks
   :type 'hook)
 
@@ -403,15 +419,17 @@ timestamp and trailing newline intact."
 
 ;;;###autoload
 (defcustom snitch-trace-timers t
-  "Whether to decorate timer callbacks with backtraces, so snitch
+  "Enable tracing event sources through Emacs timers.
+
+Whether to decorate timer callbacks with backtraces, so snitch
 can identify the package source of an event that was scheduled on
 a timer.
 
-This must be configured before initializing snitch with
+This must be configured before initializing snitch with function
 ‘snitch-mode’.  If it is changed while snitch is running, call
 ‘snitch-restart’.
 
-Enabling this requires snitch to intercept all emacs timers.
+Enabling this requires snitch to intercept all Emacs timers.
 This can cause significant delays if there are very many timers,
 or very high-speed timers.  Use ‘snitch-timer-blacklist’ to
 exclude specific timers from snitch’s tracking.
@@ -451,9 +469,11 @@ snitch-monitor-unique-timer-fns’ for more."
 
 ;;;###autoload
 (defcustom snitch-print-timer-warnings t
-  "Whether snitch should output warnings when the functions
-tracking timer backtraces encounter an unusual situation, such as
-a missing timer or a timer that never fires.
+  "Print warnings related to snitch timer tracing.
+
+Whether snitch should output warnings when the functions tracking
+timer backtraces encounter an unusual situation, such as a
+missing timer or a timer that never fires.
 
 Note that misbehaved packages that cancel timers that aren't
 scheduled will trigger false-positive warnings."
