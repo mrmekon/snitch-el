@@ -1,4 +1,3 @@
-```
 snitch.el (pronounced like schnitzel) is a firewall for Emacs.
 
 snitch intercepts calls to create network connections or launch
@@ -211,7 +210,7 @@ connections:
 >    (setq snitch-process-policy 'deny)
 >    (setq snitch-log-policy '(blocked whitelisted allowed))
 >    (add-to-list 'snitch-network-whitelist
->                  (cons #'snitch-filter/src-pkg '(elfeed)))
+>                  (cons #'snitch-filter-src-pkg '(elfeed)))
 >    (snitch-init))
 
 
@@ -502,4 +501,3 @@ Floor, Boston, MA 02110-1301, USA.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-```
