@@ -51,7 +51,7 @@
 (require 'ert)
 (require 'snitch)
 (require 'use-package)
-
+(require 'snitch-custom)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

@@ -40,6 +40,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Code:
+(require 'snitch-backtrace)
+(require 'snitch-custom)
 
 (defvar snitch--timer-alist '()
   "Cache of Emacs timers tracked by snitch.
@@ -204,7 +206,6 @@ modification and returns the result.
 Always calls the original function ORIG-FN is called with its
 arguments ARGS unmodified."
   (let* ((bt (snitch--backtrace))
-         ;;(bt '()) ;;(snitch--backtrace))
          (timer (nth 0 args))
          (idle (nth 3 args))
          (expire-time (snitch--timer-timeout timer))

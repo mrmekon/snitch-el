@@ -36,6 +36,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Code:
+(require 'snitch-custom)
+(require 'snitch-filter)
 
 ;; optional dependency on alert package
 (defvar snitch--have-alert (require 'alert nil t))

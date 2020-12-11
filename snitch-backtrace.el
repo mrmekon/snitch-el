@@ -40,6 +40,7 @@
 (require 'package) ; backtrace package sources
 (require 'backtrace)
 
+(require 'snitch-custom)
 (require 'snitch-timer)
 
 ;; Since the backtrace functions might be called extremely often,
