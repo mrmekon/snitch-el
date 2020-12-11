@@ -39,6 +39,13 @@
 (require 'snitch-custom)
 (require 'snitch-filter)
 
+(declare-function alert "ext:alert")
+
+(eieio-declare-slots
+ src-fn src-path src-pkg proc-name
+ host port family
+ executable args)
+
 ;; optional dependency on alert package
 (defvar snitch--have-alert (require 'alert nil t))
 

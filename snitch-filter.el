@@ -36,6 +36,11 @@
 ;;
 ;;; Code:
 
+(eieio-declare-slots
+ src-fn src-path src-pkg proc-name
+ host port family
+ executable args)
+
 ;;
 ;;
 ;; Filter functions

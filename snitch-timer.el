@@ -40,8 +40,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Code:
-(require 'snitch-backtrace)
 (require 'snitch-custom)
+
+(declare-function snitch--backtrace "snitch-backtrace.el")
 
 (defvar snitch--timer-alist '()
   "Cache of Emacs timers tracked by snitch.
