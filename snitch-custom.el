@@ -416,16 +416,17 @@ timestamp and trailing newline intact."
 ;;
 ;;
 
+;;;###autoload
 (defvar snitch-log-filter-map
-  "Keymap for the snitch log filter wizard.
-
-Override the default entries to change the key combinations that
-save or cancel the selection."
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-c" #'snitch-log-filter-finish)
     (define-key map "\C-g" #'snitch-log-filter-cancel)
     (define-key map "\C-c\C-k" #'snitch-log-filter-cancel)
-    map))
+    map)
+    "Keymap for the snitch log filter wizard.
+
+Override the default entries to change the key combinations that
+save or cancel the selection.")
 
 
 ;;
