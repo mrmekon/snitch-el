@@ -412,6 +412,25 @@ timestamp and trailing newline intact."
 
 ;;
 ;;
+;; Key mappings
+;;
+;;
+
+;;;###autoload
+(defvar snitch-log-filter-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "\C-c\C-c" #'snitch-log-filter-finish)
+    (define-key map "\C-g" #'snitch-log-filter-cancel)
+    (define-key map "\C-c\C-k" #'snitch-log-filter-cancel)
+    map)
+    "Keymap for the snitch log filter wizard.
+
+Override the default entries to change the key combinations that
+save or cancel the selection.")
+
+
+;;
+;;
 ;; Timers
 ;;
 ;;
@@ -440,8 +459,8 @@ or very high-speed timers.  Use ‘snitch-timer-blacklist’ to
 exclude specific timers from snitch’s tracking.
 
 You can run ‘snitch-monitor-unique-timer-fns’ to find out if any
-timers are running often.  Use ‘M-x describe-function <RET>
-snitch-monitor-unique-timer-fns’ for more."
+timers are running often.  See `snitch-monitor-unique-timer-fns’
+for more."
   :type 'boolean
   :group 'snitch-timer)
 
@@ -466,11 +485,10 @@ snitch-monitor-unique-timer-fns’ for more."
 ;;or lambda expression in hex string format.
 ;;
 ;;You can run ‘snitch-monitor-unique-timer-fns’ to find out if any
-;;timers are running often.  Use ‘M-x describe-function <RET>
-;;snitch-monitor-unique-timer-fns’ for more.  This function also
-;;displays the SHA1 hash of unnamed functions."
-;;  :type '(repeat (choice (function) (string)))
-;;  :group 'snitch-timer)
+;;timers are running often.  See `snitch-monitor-unique-timer-fns' for
+;;more.  This function also displays the SHA1 hash of unnamed
+;;functions."  :type '(repeat (choice (function) (string))) :group
+;;'snitch-timer)
 
 ;;;###autoload
 (defcustom snitch-print-timer-warnings t
