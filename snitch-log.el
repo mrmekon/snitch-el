@@ -73,7 +73,7 @@ Return true if any of POLICIES are explicitly defined in
                     policies)))
 
 (defun snitch--log-policy-match (policies)
-  "Check of current log policy matches given policies.
+  "Check of current log policies match given policies.
 
 Return true of any of the log policies in POLICIES are covered by
 one of the currently enabled policies in ‘snitch-log-policy’.
@@ -300,16 +300,19 @@ idle."
   "Open snitch ’log filter’ wizard on selected log entry.
 
 Opens an interactive 'wizard' to create a new snitch
-whitelist/blacklist rule based on the event log under the cursor.
+whitelist/blacklist rule based on the event log under the
+cursor. \\<snitch-log-filter-map>
 
 To use the wizard, move the cursor over an item in the snitch
 firewall log buffer (default: ‘*snitch firewall log*’), and run
-this command (‘M-x snitch-filter-from-log’).  A window will appear
-with contents populated from the selected log line.  Typing the
-highlighted mnemonic characters toggles fields on and off.  When
-all desired fields are selected, typing ‘C-c C-c’ appends the new
-filter to the existing blacklist or whitelist, and saves it
-persistently as a customized variable."
+this command (‘M-x snitch-filter-from-log’).  A window will
+appear with contents populated from the selected log line.
+Typing the highlighted mnemonic characters toggles fields on and
+off.  When all desired fields are selected, typing
+\\[snitch-log-filter-finish] appends the new filter to the
+existing blacklist or whitelist, and saves it persistently as a
+customized variable.  Use \\[snitch-log-filter-cancel] to cancel
+without saving."
   (interactive)
   (let ((cls (get-text-property (point) 'snitch-class))
         (fn (get-text-property (point) 'snitch-src-fn))
@@ -340,6 +343,18 @@ persistently as a customized variable."
                                         :executable exec
                                         :args args)))))))
 
+(defun snitch-log-filter-finish ()
+  "Dummy finish function for keymap entries.
+
+Map to key combo to save and finish a snitch log filter wizard
+selection."  nil)
+
+(defun snitch-log-filter-cancel ()
+  "Dummy cancel function for keymap entries.
+
+Map to key combo to cancel a snitch log filter wizard selection
+  without saving."  nil)
+
 (defun snitch--run-log-filter-wizard (event)
   "Run user interface for ’log filter’ wizard.
 
@@ -365,16 +380,16 @@ customization variable if appropriate."
     (while (not finished)
       ;; redraw to update font properties
       (snitch--redraw-log-filter-buffer event fields)
-      (let* ((key (read-key-sequence "Enter field: ")))
+      (let* ((key (read-key-sequence "Enter field: "))
+             (keyfn (lookup-key snitch-log-filter-map key)))
         (cond
          ;; ignore, probably a control character (arrow keys, etc)
          ;; must come first to short-circuit before string comparisons
          ((not (stringp key)) nil)
          ;; abort and exit
-         ((string-equal key (kbd "C-c C-k")) (setq fields '() finished t))
-         ((string-equal key (kbd "C-g")) (setq fields '() finished t))
+         ((equal keyfn #'snitch-log-filter-cancel) (setq fields '() finished t))
          ;; save and exit
-         ((string-equal key (kbd "C-c C-c")) (setq finished t))
+         ((equal keyfn #'snitch-log-filter-finish) (setq finished t))
          ;; some other string.  check if string is in field map, and
          ;; if so toggle that slot of the event in the list of slots
          ;; to filter on
