@@ -411,25 +411,28 @@ customization variable if appropriate."
                      (cons (cons slot (eieio-oref event slot)) slot-value-alist)))
       ;; query user for whether this should go in blacklist or whitelist
       (while (null black-white)
-        (let* ((key (read-key-sequence "[b]lacklist or [w]hitelist? ")))
+        (let* ((key (read-key-sequence "[b]lacklist or [w]hitelist? "))
+               (keyfn (lookup-key snitch-log-filter-map key)))
           (cond
            ;; ignore, probably a control character (arrow keys, etc)
            ;; must come first to short-circuit before string comparisons
            ((not (stringp key)) nil)
+           ((equal keyfn #'snitch-log-filter-cancel) (setq fields '() black-white "blacklist"))
            ((string-equal key "b") (setq black-white "blacklist"))
            ((string-equal key "w") (setq black-white "whitelist")))))
       ;; append the new entry to the correct defcustom list, and
       ;; save as default customization.
-      (let* ((filter (cons #'snitch-filter-log slot-value-alist))
-             (orig-list (cond
-                         ((snitch-network-entry-p event)
-                          (intern-soft (format "snitch-network-%s" black-white)))
-                         ((snitch-process-entry-p event)
-                          (intern-soft (format "snitch-process-%s" black-white)))
-                         (t nil)))
-             (orig-val (eval orig-list))
-             (new-list (cons filter orig-val)))
-        (customize-save-variable orig-list new-list)))))
+      (when fields
+        (let* ((filter (cons #'snitch-filter-log slot-value-alist))
+               (orig-list (cond
+                           ((snitch-network-entry-p event)
+                            (intern-soft (format "snitch-network-%s" black-white)))
+                           ((snitch-process-entry-p event)
+                            (intern-soft (format "snitch-process-%s" black-white)))
+                           (t nil)))
+               (orig-val (eval orig-list))
+               (new-list (cons filter orig-val)))
+          (customize-save-variable orig-list new-list))))))
 
 (defun snitch--log-filter-map-slot-from-key (map key)
   "Return field matching key press in snitch log filter.
