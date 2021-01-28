@@ -416,6 +416,9 @@ timestamp and trailing newline intact."
 ;;
 ;;
 
+(declare-function snitch-log-filter-finish "snitch-log.el")
+(declare-function snitch-log-filter-cancel "snitch-log.el")
+
 ;;;###autoload
 (defvar snitch-log-filter-map
   (let ((map (make-sparse-keymap)))
