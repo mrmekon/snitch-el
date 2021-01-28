@@ -301,7 +301,7 @@ idle."
 
 Opens an interactive 'wizard' to create a new snitch
 whitelist/blacklist rule based on the event log under the
-cursor. \\<snitch-log-filter-map>
+cursor.  \\<snitch-log-filter-map>
 
 To use the wizard, move the cursor over an item in the snitch
 firewall log buffer (default: ‘*snitch firewall log*’), and run
