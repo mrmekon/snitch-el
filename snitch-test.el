@@ -1,4 +1,4 @@
-;;; snitch-test.el                         -*- lexical-binding: t; -*-
+;;; snitch-test.el ---                     -*- lexical-binding: t; -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; See snitch.el for full details.

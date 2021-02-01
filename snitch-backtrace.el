@@ -1,4 +1,4 @@
-;;; snitch-backtrace.el -- part of snitch  -*- lexical-binding: t; -*-
+;;; snitch-backtrace.el ---                -*- lexical-binding: t; -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; See snitch.el for full details.
@@ -166,7 +166,7 @@ accesses."
 
 Given a directory DIR, returns a package that owns the files in
 that directory."
-  (when (null snitch--package-dirs-cache)
+  (unless snitch--package-dirs-cache
     (snitch--fill-package-dirs-cache))
   (gethash (file-name-as-directory dir) snitch--package-dirs-cache))
 

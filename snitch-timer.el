@@ -1,4 +1,4 @@
-;;; snitch-timer.el -- part of snitch      -*- lexical-binding: t; -*-
+;;; snitch-timer.el ---                    -*- lexical-binding: t; -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; See snitch.el for full details.

@@ -1,4 +1,4 @@
-;;; snitch-filter.el -- part of snitch     -*- lexical-binding: t; -*-
+;;; snitch-filter.el ---                   -*- lexical-binding: t; -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; See snitch.el for full details.

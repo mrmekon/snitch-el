@@ -1,4 +1,4 @@
-;;; snitch-log.el -- part of snitch        -*- lexical-binding: t; -*-
+;;; snitch-log.el ---                      -*- lexical-binding: t; -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; See snitch.el for full details.
@@ -40,7 +40,10 @@
 (require 'snitch-filter)
 
 (declare-function alert "ext:alert")
-
+(declare-function snitch-process-entry "snitch.el")
+(declare-function snitch-process-entry-p "snitch.el")
+(declare-function snitch-network-entry "snitch.el")
+(declare-function snitch-network-entry-p "snitch.el")
 (eieio-declare-slots
  src-fn src-path src-pkg proc-name
  host port family
@@ -365,7 +368,7 @@ EVENT.  This function sets up the window, populates it, loops
 over user keypresses, and eventually saves the filter to the
 customization variable if appropriate."
   ;; create buffer if needed
-  (when (null snitch--log-filter-buffer)
+  (unless snitch--log-filter-buffer
     (snitch--init-log-filter-buffer))
   ;; set initial contents of buffer so it opens to the correct size
   (snitch--redraw-log-filter-buffer event nil)
