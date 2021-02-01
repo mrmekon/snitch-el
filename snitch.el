@@ -880,7 +880,7 @@ network connections."
 (defun snitch--init ()
   "Initialize snitch.el firewall, enabling globally."
   (interactive)
-  (when snitch-mode
+  (when (bound-and-true-p snitch-mode)
       (snitch--deinit))
   (when snitch-trace-timers (snitch--activate-timer-trace))
   (when (snitch--register-wrapper-fns) t)

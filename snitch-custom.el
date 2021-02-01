@@ -1,4 +1,4 @@
-;;; snitch-custom.el -- part of snitch     -*- lexical-binding: t; -*-
+;;; snitch-custom.el ---                   -*- lexical-binding: t; -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; See snitch.el for full details.
