@@ -104,9 +104,30 @@ several lines:
 
 === GETTING SNITCH ===
 
-snitch is not currently published in any package repositories
-(*ELPA).  It can be installed by any package manager that supports
-git repositories, or manually.
+snitch is published in the MELPA package repository.  The recommend
+installation method is via an Emacs package manager that supports
+MELPA.
+
+use-package:
+
+>  (use-package snitch :ensure t)
+
+straight.el:
+
+>  (straight-use-package 'snitch)
+
+manually:
+
+> (require 'package)
+> (add-to-list 'package-archives
+>              '("melpa" . "https://melpa.org/packages/"))
+> (unless (package-installed-p 'snitch)
+>   (package-install 'snitch))
+> (require 'snitch)
+
+
+It can also be installed by any package manager that supports git
+repositories, or manually via tarball.
 
 quelpa:
 
@@ -474,19 +495,23 @@ to the socket.
  - handle service strings as port numbers
  - ensure the inverted negation rules make sense
  - add blacklist for timer functions
- - publish on MELPA?
  - profit!
 
 
 === VERSION HISTORY ===
 
-v0.3.0 (development)
+v0.3.1 (development)
 
+v0.3.0 (2021-02-02)
+
+  - published on MELPA
   - make snitch a global minor mode
     - introduce (snitch-mode)
     - make (snitch-init) private (snitch--init)
     - make (snitch-deinit) private (snitch--deinit)
   - add init and deinit hooks
+  - customizable keymap for log filter wizard
+  - fixed several byte compiler warnings
 
 v0.2.0 (2020-12-09)
 
