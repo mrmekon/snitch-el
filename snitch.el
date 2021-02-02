@@ -4,7 +4,7 @@
 ;; Copyright (C) 2020 Trevor Bentley
 ;; Author: Trevor Bentley <snitch.el@x.mrmekon.com>
 ;; Created: 01 Dec 2020
-;; Version: 0.3.0
+;; Version: 0.3.1
 ;; Package-Requires: ((emacs "27.1"))
 ;;
 ;; Keywords: processes, comm
@@ -623,7 +623,7 @@ protocol family of the connection that snitch is considering.")
 ;;
 ;;
 
-(defconst snitch--version "0.3.0"
+(defconst snitch--version "0.3.1"
   "Snitch version as a string.")
 
 (defconst snitch-source-package-types
